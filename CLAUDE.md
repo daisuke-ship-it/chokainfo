@@ -1,5 +1,45 @@
 # chokainfo プロジェクト設計書
 
+## Claude への指示
+
+### 作業前に必ず確認すること
+- 設計思想・改善方針は `/context` コマンドで Knowledge フォルダを読み込む
+- 作業記録は `/log` コマンドで作業ログ MD に追記する
+
+### 参照すべきドキュメント
+
+**設計思想・方針（Knowledge フォルダ）**
+`/Users/daisuke/Library/Mobile Documents/iCloud~md~obsidian/Documents/BrainDump/Knowledge/project-chokainfo/`
+- `Chokainfo構想——釣果情報の民主化とデータ駆動型メディアの設計思想.md` — コアの思想・競合戦略・収益モデル
+- `chokainfo_site_improvement_framework.md` — UI/UX 改善フレームワーク
+- `サイトデザインの最適化.md` — デザイン方針（スマホファースト）
+- `AIっぽくない文章作成法.md` — AI 生成テキストの人間らしさのコツ
+- `responsive_design_and_content_architecture.md` — レスポンシブ・コンテンツ設計
+- `human_voice_content_generation.md` — 人間らしいコンテンツ生成
+- `サイト改善提案.md` — 具体的改善提案
+
+**作業記録**
+`/Users/daisuke/Library/Mobile Documents/iCloud~md~obsidian/Documents/BrainDump/Methods/Chokainfo構築ログ_釣果情報サイトをAIで作る.md`
+
+### 設計哲学（必読）
+
+**「DB厳密、Claudeが吸収」の原則**
+- DB には信頼できる構造化データのみ（id, shipyard_id, catch_date 等）
+- 曖昧なテキスト（location_text, condition_text）は raw のまま保存
+- AI 要約時に Claude が解釈・正規化する
+
+**コア方針**
+- 「完璧なDB」より「動く MVP」
+- 「競争」より「棲み分け」（船釣り.jp との直接対抗ではなくモダン・高速・モバイルで別ポジション）
+- スマホファースト（釣り場でスマホで見るユーザーが主）
+- 「判断材料を提供するツール」として設計（ニュースサイトではなく）
+
+### カスタムコマンド（`.claude/commands/`）
+- `/context` — Knowledge フォルダの設計文書をすべて読み込む
+- `/log` — 作業内容を作業記録 MD に追記する
+
+---
+
 ## プロジェクト概要
 - **サイト名**: 釣果情報.com
 - **URL**: https://www.chokainfo.com
