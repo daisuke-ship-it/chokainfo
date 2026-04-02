@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DM_Mono } from "next/font/google";
+import { DM_Mono, Shippori_Mincho_B1 } from "next/font/google";
 import "./globals.css";
 import BottomNav from "@/components/BottomNav";
 import { Analytics } from "@vercel/analytics/next";
@@ -9,6 +9,13 @@ const dmMono = DM_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
   weight: ["300", "400"],
+  display: "swap",
+});
+
+const shipporiMincho = Shippori_Mincho_B1({
+  variable: "--font-shippori",
+  subsets: ["latin"],
+  weight: ["400", "600", "800"],
   display: "swap",
 });
 
@@ -55,7 +62,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
       </head>
-      <body className={`${dmMono.variable} antialiased`}>
+      <body className={`${dmMono.variable} ${shipporiMincho.variable} antialiased`}>
         {children}
         <BottomNav />
         <Analytics />

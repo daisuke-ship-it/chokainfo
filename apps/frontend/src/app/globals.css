@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Noto+Serif+JP:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+/* ① Shippori Mincho B1（格調ある和文serif）+ Noto Sans JP（本文）*/
+@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;600;800&family=Noto+Sans+JP:wght@400;500&family=Noto+Serif+JP:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
 /* ─── Design Tokens ─────────────────────────────────────────── */
@@ -18,7 +19,7 @@
   --border-radius-tag:  100px;
   --glass-blur:         blur(20px);
 
-  /* ── Legacy aliases (kept for component compatibility) ────── */
+  /* ── Legacy aliases ────── */
   --primary:        #050A18;
   --accent:         #00F5FF;
   --accent-light:   rgba(0, 245, 255, 0.10);
@@ -72,9 +73,11 @@
   --radius-xl:   32px;
   --radius-pill: var(--border-radius-tag);
 
-  /* Typography */
-  --font-serif: "Noto Serif JP", "Yu Mincho", "游明朝", Georgia, serif;
-  --font-label: "Inter", system-ui, sans-serif;
+  /* ① Typography — Shippori Mincho B1 に変更 */
+  --font-serif: "Shippori Mincho B1", "Yu Mincho", "游明朝", Georgia, serif;
+  --font-body:  "Noto Sans JP", "Hiragino Kaku Gothic ProN", sans-serif;
+  --font-label: "Noto Sans JP", system-ui, sans-serif;
+  --font-data:  var(--font-mono, "DM Mono", monospace); /* 数値専用 */
 }
 
 /* ─── Reset & Base ──────────────────────────────────────────── */
@@ -86,12 +89,18 @@ html {
   max-width: 100%;
 }
 
+/* ② 背景：深海グラデ + 微細格子テクスチャ */
 body {
-  background: radial-gradient(circle at top, var(--bg-gradient-top), var(--bg-deep-sea) 70%);
+  background-color: #050A18;
+  background-image:
+    linear-gradient(rgba(0, 245, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 245, 255, 0.018) 1px, transparent 1px),
+    radial-gradient(ellipse 140% 70% at 50% 0%, #0d2444 0%, #071228 45%, #050A18 80%);
+  background-size: 40px 40px, 40px 40px, 100% 100%;
   background-attachment: fixed;
   min-height: 100vh;
   color: var(--color-text-primary);
-  font-family: 'Inter', 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.65;
@@ -111,52 +120,75 @@ a, button { transition: all 0.2s ease-out; }
 }
 
 /* ─── Typography ─────────────────────────────────────────────── */
-h1, .premium-title {
-  font-family: 'Yu Mincho', 'Noto Serif JP', serif;
-  font-weight: 500;
-  letter-spacing: 0.1em;
+/* ① Shippori Mincho B1 を見出しに適用 */
+h1, h2, h3, .premium-title {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  letter-spacing: 0.06em;
   color: var(--color-text-primary);
 }
 
 .data-label, .date-display {
-  font-family: 'Inter', sans-serif;
-  font-weight: 300;
+  font-family: var(--font-body);
+  font-weight: 400;
   color: var(--color-text-secondary);
 }
 
-/* ─── Glass card ─────────────────────────────────────────────── */
+/* 数値・データ専用（釣果数・サイズ） */
+.data-value {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+
+/* ─── ③ Glass card — グラデーションボーダー ─────────────────── */
 .glass, .glass-card {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(255, 255, 255, 0.03) 100%
-  );
+  /* グラデーションボーダーのため background-clip を使用 */
+  background:
+    linear-gradient(
+      160deg,
+      rgba(255, 255, 255, 0.07) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    ) padding-box,
+    linear-gradient(
+      135deg,
+      rgba(0, 245, 255, 0.40) 0%,
+      rgba(255, 255, 255, 0.14) 25%,
+      rgba(255, 255, 255, 0.04) 65%,
+      rgba(0, 245, 255, 0.10) 100%
+    ) border-box;
+  border: 1px solid transparent;
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-top: 1px solid rgba(255, 255, 255, 0.20);
-  border-left: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.40),
+    0 8px 32px rgba(0, 0, 0, 0.45),
     inset 0 1px 0 rgba(255, 255, 255, 0.10),
     inset 0 -1px 0 rgba(0, 0, 0, 0.20);
   border-radius: 20px;
   padding: 24px;
-  transition: transform 0.2s ease-out, border-color 0.2s ease-out, box-shadow 0.2s ease-out;
+  transition: transform 0.25s ease-out, box-shadow 0.25s ease-out, background 0.25s ease-out;
 }
 
 .glass-card:hover {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.12) 0%,
-    rgba(255, 255, 255, 0.05) 100%
-  );
-  border-color: rgba(0, 212, 200, 0.40);
+  background:
+    linear-gradient(
+      160deg,
+      rgba(255, 255, 255, 0.10) 0%,
+      rgba(255, 255, 255, 0.04) 100%
+    ) padding-box,
+    linear-gradient(
+      135deg,
+      rgba(0, 245, 255, 0.65) 0%,
+      rgba(255, 255, 255, 0.22) 25%,
+      rgba(255, 255, 255, 0.06) 65%,
+      rgba(0, 245, 255, 0.25) 100%
+    ) border-box;
+  border: 1px solid transparent;
+  transform: translateY(-3px);
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.40),
-    0 0 20px rgba(0, 212, 200, 0.10),
+    0 16px 48px rgba(0, 0, 0, 0.50),
+    0 0 32px rgba(0, 245, 255, 0.07),
     inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
 }
 
 /* ─── Active tag / pill ──────────────────────────────────────── */
@@ -165,7 +197,7 @@ h1, .premium-title {
   border: 1px solid var(--color-neon-turquoise);
   border-radius: var(--border-radius-tag);
   box-shadow: 0 0 10px rgba(0, 245, 255, 0.50);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
   font-weight: 500;
 }
 
