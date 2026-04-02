@@ -22,8 +22,14 @@ const HANDLER_COLORS: Record<string, { bg: string; color: string }> = {
   rss: { bg: 'rgba(234,179,8,0.20)', color: '#fbbf24' },
 }
 
-const FILTER_OPTIONS = ['all', 'active', 'inactive', 'gyosan', 'wordpress', 'blogphp', 'claude'] as const
-type FilterOption = typeof FILTER_OPTIONS[number]
+const HANDLER_FILTERS = ['all', 'active', 'inactive', 'gyosan', 'wordpress', 'blogphp', 'claude'] as const
+type HandlerFilter = typeof HANDLER_FILTERS[number]
+
+function getAreaName(s: Shipyard): string {
+  if (!s.areas) return ''
+  if (Array.isArray(s.areas)) return s.areas[0]?.name ?? ''
+  return s.areas.name ?? ''
+}
 
 function relativeTime(dateStr: string | null): string {
   if (!dateStr) return '未取得'
@@ -57,17 +63,24 @@ function HandlerBadge({ handler }: { handler?: string }) {
 }
 
 export default function ShipyardTable({ shipyards }: { shipyards: Shipyard[] }) {
-  const [filter, setFilter] = useState<FilterOption>('all')
+  const [filter, setFilter] = useState<HandlerFilter>('all')
+  const [areaFilter, setAreaFilter] = useState<string>('all')
   const [toggleStates, setToggleStates] = useState<Record<number, boolean>>({})
 
   const isActive = (s: Shipyard) =>
     s.id in toggleStates ? toggleStates[s.id] : s.is_active
 
+  // エリア一覧を動的に生成
+  const areas = Array.from(new Set(shipyards.map(getAreaName).filter(Boolean))).sort()
+
   const filtered = shipyards.filter((s) => {
-    if (filter === 'active') return isActive(s)
-    if (filter === 'inactive') return !isActive(s)
-    if (filter === 'all') return true
-    return (s.scrape_config?.handler ?? 'claude') === filter
+    if (filter === 'active' && !isActive(s)) return false
+    if (filter === 'inactive' && isActive(s)) return false
+    if (filter !== 'all' && filter !== 'active' && filter !== 'inactive') {
+      if ((s.scrape_config?.handler ?? 'claude') !== filter) return false
+    }
+    if (areaFilter !== 'all' && getAreaName(s) !== areaFilter) return false
+    return true
   })
 
   async function toggleActive(shipyard: Shipyard) {
@@ -87,9 +100,34 @@ export default function ShipyardTable({ shipyards }: { shipyards: Shipyard[] }) 
 
   return (
     <>
-      {/* フィルター */}
-      <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', flexWrap: 'wrap' }}>
-        {FILTER_OPTIONS.map((f) => (
+      {/* エリアフィルター */}
+      <div style={{ display: 'flex', gap: '6px', marginBottom: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginRight: '2px' }}>エリア</span>
+        {(['all', ...areas]).map((a) => (
+          <button
+            key={a}
+            onClick={() => setAreaFilter(a)}
+            style={{
+              background: areaFilter === a ? 'rgba(0,212,200,0.15)' : 'rgba(255,255,255,0.05)',
+              color: areaFilter === a ? '#00d4c8' : 'var(--text-muted)',
+              border: '1px solid',
+              borderColor: areaFilter === a ? 'rgba(0,212,200,0.5)' : 'var(--border-strong)',
+              borderRadius: '100px',
+              padding: '4px 12px',
+              fontSize: '12px',
+              cursor: 'pointer',
+              fontWeight: areaFilter === a ? 600 : 400,
+            }}
+          >
+            {a === 'all' ? 'すべて' : a}
+          </button>
+        ))}
+      </div>
+
+      {/* ハンドラー/ステータスフィルター */}
+      <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginRight: '2px' }}>絞込</span>
+        {HANDLER_FILTERS.map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
@@ -123,7 +161,7 @@ export default function ShipyardTable({ shipyards }: { shipyards: Shipyard[] }) 
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-strong)' }}>
-                {['船宿名', 'URL', 'ハンドラー', '最終取得', '有効', '操作'].map((h) => (
+                {['船宿名', 'エリア', 'URL', 'ハンドラー', '最終取得', '有効', '操作'].map((h) => (
                   <th
                     key={h}
                     style={{
@@ -167,6 +205,9 @@ export default function ShipyardTable({ shipyards }: { shipyards: Shipyard[] }) 
                         ⚠
                       </span>
                     )}
+                  </td>
+                  <td style={{ padding: '10px 14px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                    {getAreaName(s) || '—'}
                   </td>
                   <td style={{ padding: '10px 14px', color: 'var(--text-muted)', maxWidth: '200px' }}>
                     <span
@@ -244,7 +285,7 @@ export default function ShipyardTable({ shipyards }: { shipyards: Shipyard[] }) 
               {filtered.length === 0 && (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}
                   >
                     該当する船宿がありません
