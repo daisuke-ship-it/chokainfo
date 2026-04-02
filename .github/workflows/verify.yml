@@ -1,0 +1,194 @@
+name: 釣果取得 検証
+
+on:
+  workflow_dispatch:
+  # スクレイパー完了後に自動実行する場合は下記を有効化し、
+  # workflow_name をスクレイパーのワークフロー名に合わせてください
+  # workflow_run:
+  #   workflows: ["scraper"]
+  #   types: [completed]
+  schedule:
+    # 毎日 09:30 JST (00:30 UTC) に実行 ※スクレイパー後に合わせて調整してください
+    - cron: '30 0 * * *'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 釣果データ検証
+        uses: actions/github-script@v7
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        with:
+          script: |
+            const SUPABASE_URL = process.env.SUPABASE_URL
+            const SUPABASE_KEY = process.env.SUPABASE_KEY
+
+            if (!SUPABASE_URL || !SUPABASE_KEY) {
+              core.setFailed('SUPABASE_URL または SUPABASE_KEY が設定されていません')
+              return
+            }
+
+            // ── JST の今日・先週範囲を計算 ────────────────────────────
+            const now = new Date()
+            const jst = new Date(now.getTime() + 9 * 60 * 60 * 1000)
+            const todayStr = jst.toISOString().slice(0, 10)
+
+            const lw7 = new Date(jst); lw7.setDate(jst.getDate() - 7)
+            const lw1 = new Date(jst); lw1.setDate(jst.getDate() - 1)
+            const lw7Str = lw7.toISOString().slice(0, 10)
+            const lw1Str = lw1.toISOString().slice(0, 10)
+
+            const displayDate = `${jst.getFullYear()}/${String(jst.getMonth()+1).padStart(2,'0')}/${String(jst.getDate()).padStart(2,'0')}`
+
+            console.log(`検証日: ${todayStr} (JST)`)
+            console.log(`先週範囲: ${lw7Str} ～ ${lw1Str}`)
+
+            // ── Supabase REST API ヘルパー ─────────────────────────────
+            async function supaFetch(path) {
+              const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+                headers: {
+                  apikey: SUPABASE_KEY,
+                  Authorization: `Bearer ${SUPABASE_KEY}`,
+                }
+              })
+              if (!res.ok) {
+                const text = await res.text()
+                throw new Error(`Supabase error ${res.status}: ${text}`)
+              }
+              return res.json()
+            }
+
+            // ── データ取得 ─────────────────────────────────────────────
+            const [shipyards, todayCatches, lwCatches] = await Promise.all([
+              supaFetch('shipyards?is_active=eq.true&select=id,name&order=id.asc'),
+              supaFetch(`catches?sail_date=eq.${todayStr}&select=shipyard_id,source_url`),
+              supaFetch(`catches?sail_date=gte.${lw7Str}&sail_date=lte.${lw1Str}&select=shipyard_id,source_url,sail_date`),
+            ])
+
+            console.log(`アクティブ船宿: ${shipyards.length}件`)
+            console.log(`今日の取得: ${todayCatches.length}件`)
+            console.log(`先週の取得: ${lwCatches.length}件`)
+
+            // ── 集計 ──────────────────────────────────────────────────
+            // 今日の件数 (shipyard_id → count)
+            const todayCount = {}
+            const urlMap = {}
+
+            for (const c of todayCatches) {
+              if (!c.shipyard_id) continue
+              const id = String(c.shipyard_id)
+              todayCount[id] = (todayCount[id] || 0) + 1
+              if (c.source_url && !urlMap[id]) urlMap[id] = c.source_url
+            }
+
+            // 先週の日別件数 → 7日平均
+            const lwDailyCount = {} // id -> { date -> count }
+            for (const c of lwCatches) {
+              if (!c.shipyard_id) continue
+              const id = String(c.shipyard_id)
+              if (!lwDailyCount[id]) lwDailyCount[id] = {}
+              lwDailyCount[id][c.sail_date] = (lwDailyCount[id][c.sail_date] || 0) + 1
+              if (c.source_url && !urlMap[id]) urlMap[id] = c.source_url
+            }
+
+            const lwAvg = {}
+            for (const [id, days] of Object.entries(lwDailyCount)) {
+              const total = Object.values(days).reduce((s, n) => s + n, 0)
+              lwAvg[id] = total / 7
+            }
+
+            // ── 分類 ──────────────────────────────────────────────────
+            const red    = []  // 今日0件 (is_active=true なのに0)
+            const yellow = []  // 先週比 -50% 以上
+            const green  = []  // 正常
+
+            for (const sy of shipyards) {
+              const id = String(sy.id)
+              const todayN = todayCount[id] || 0
+              const lwN    = lwAvg[id]   || 0
+
+              if (todayN === 0) {
+                red.push({ id: sy.id, name: sy.name, url: urlMap[id] || '' })
+              } else if (lwN > 0 && todayN < lwN * 0.5) {
+                yellow.push({ id: sy.id, name: sy.name, today: todayN, lwAvg: Math.round(lwN * 10) / 10 })
+              } else {
+                green.push({ id: sy.id, name: sy.name, today: todayN })
+              }
+            }
+
+            // ── Job Summary 構築 ──────────────────────────────────────
+            await core.summary
+              .addHeading(`🎣 釣果取得 検証レポート - ${displayDate}`, 2)
+              .addRaw('\n')
+              .write()
+
+            // 🔴 0件
+            const s1 = core.summary.addHeading('🔴 要確認（0件）', 3)
+            if (red.length > 0) {
+              s1.addTable([
+                [
+                  { data: '船宿名', header: true },
+                  { data: 'ID',     header: true },
+                  { data: 'URL',    header: true },
+                ],
+                ...red.map(sy => [
+                  { data: sy.name },
+                  { data: String(sy.id) },
+                  { data: sy.url || '—' },
+                ]),
+              ])
+            } else {
+              s1.addRaw('なし\n')
+            }
+            await s1.write()
+
+            // 🟡 減少
+            const s2 = core.summary.addHeading('🟡 減少中（先週比 -50% 以上）', 3)
+            if (yellow.length > 0) {
+              s2.addTable([
+                [
+                  { data: '船宿名',   header: true },
+                  { data: '今日',     header: true },
+                  { data: '先週平均', header: true },
+                ],
+                ...yellow.map(sy => [
+                  { data: sy.name },
+                  { data: String(sy.today) },
+                  { data: String(sy.lwAvg) },
+                ]),
+              ])
+            } else {
+              s2.addRaw('なし\n')
+            }
+            await s2.write()
+
+            // 🟢 正常
+            await core.summary
+              .addHeading('🟢 正常取得', 3)
+              .addRaw(`${green.length}船宿が正常に取得\n`)
+              .addSeparator()
+              .addHeading('📊 集計', 3)
+              .addList([
+                `アクティブ船宿数: ${shipyards.length}`,
+                `🔴 0件: ${red.length}`,
+                `🟡 減少: ${yellow.length}`,
+                `🟢 正常: ${green.length}`,
+              ])
+              .write()
+
+            // ── ログ出力 ──────────────────────────────────────────────
+            console.log(`\n===== 検証結果 =====`)
+            console.log(`🔴 0件: ${red.length}件`)
+            if (red.length > 0) red.forEach(sy => console.log(`  - [${sy.id}] ${sy.name}`))
+            console.log(`🟡 減少: ${yellow.length}件`)
+            if (yellow.length > 0) yellow.forEach(sy => console.log(`  - [${sy.id}] ${sy.name} (今日:${sy.today} / 先週平均:${sy.lwAvg})`))
+            console.log(`🟢 正常: ${green.length}件`)
+
+            // 🔴 が1件以上あれば warning アノテーションを付けて終了
+            // （job 自体は success のまま — スクレイパーは成功扱い）
+            if (red.length > 0) {
+              const names = red.map(s => s.name).join('、')
+              core.warning(`${red.length}件の船宿が今日0件です: ${names}`)
+            }

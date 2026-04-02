@@ -1,0 +1,15 @@
+target_fish:
+  - タチウオ
+  - 太刀魚
+  - たちうお
+
+extract_fields:
+  - date          # 釣行日
+  - fish_name     # 魚種名
+  - size_min_cm   # サイズ最小（cm）
+  - size_max_cm   # サイズ最大（cm）
+  - count_min     # 釣果数最小
+  - count_max     # 釣果数最大（竿頭）
+  - source_url    # 元記事URL
+
+days_to_fetch: 3   # 直近何日分を取得するか

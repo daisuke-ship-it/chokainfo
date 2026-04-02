@@ -1,0 +1,80 @@
+shipyards:
+  - name: 吉野屋
+    area: 浦安
+    url: https://www.team-yoshinoya.com/tsuri/diary/
+    enabled: true
+
+  - name: こなや丸
+    area: 千葉・長浦
+    url: https://www.konayamaru.com/
+    enabled: true
+
+  - name: つり幸
+    area: 川崎
+    url: https://www.tsurikou.com/
+    enabled: true
+
+  - name: 中山丸
+    area: 川崎
+    url: https://www.nakayamamaru.com/
+    enabled: true
+
+  - name: 渡辺釣船店
+    area: 横浜
+    url: http://blog.watanabetsuribuneten.com/
+    enabled: true
+
+  - name: 三喜丸
+    area: 横浜
+    url: https://www.miki-maru.net/
+    enabled: true
+
+  - name: 教至丸
+    area: 横浜
+    url: https://www.noriyukimaru.net/category/Choka/
+    enabled: true
+
+  - name: 弁天屋
+    area: 金沢八景
+    url: https://bentenya.com/chouka.html
+    enabled: true
+
+  - name: 忠彦丸
+    area: 金沢八景
+    url: https://tadahikomaru.com/
+    enabled: true
+
+  - name: 一之瀬丸
+    area: 金沢八景
+    url: https://www.ichinosemaru.com/
+    enabled: true
+
+  - name: 蒲谷丸
+    area: 金沢漁港
+    url: https://kabayamaru.com/
+    enabled: true
+
+  - name: こうゆう丸
+    area: 新安浦
+    url: https://www.kouyuumaru.net/
+    enabled: true
+
+  - name: 五郎丸
+    area: 鴨居大室
+    url: https://www.gorou.co.jp/
+    enabled: true
+
+  - name: 豆や
+    area: 芝浦
+    url: https://mamemaru.com/
+    enabled: false
+
+  - name: 岩田屋
+    area: 浦安
+    url: https://iwataya-funayado.jp/tsuribune_blog/
+    enabled: true
+
+  - name: ひらの丸
+    area: 富津
+    url: https://www.hiranomaru.net/
+    enabled: true
