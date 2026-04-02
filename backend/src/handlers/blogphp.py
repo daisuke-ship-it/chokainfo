@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 blog.php 独自CMS ハンドラー（6件対応）
 

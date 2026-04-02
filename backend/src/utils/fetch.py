@@ -1,3 +1,4 @@
+from __future__ import annotations
 """HTTP取得 / MD5 / テキスト変換 ユーティリティ"""
 import hashlib
 import requests

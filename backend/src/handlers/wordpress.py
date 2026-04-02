@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 WordPress ハンドラー（14件対応）
 

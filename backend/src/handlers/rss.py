@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 RSS/RDF ハンドラー（Seesaa・Livedoor 等）
 

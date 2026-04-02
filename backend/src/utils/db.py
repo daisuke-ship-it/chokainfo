@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Supabase 操作ユーティリティ"""
 import logging
 from datetime import datetime

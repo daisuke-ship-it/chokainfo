@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 gyosan.jp CMS ハンドラー（24件対応）
 
@@ -81,109 +82,142 @@ class GyosanHandler(BaseHandler):
     # ── 内部メソッド ──────────────────────────────────────────────────────────
 
     def _parse_detail(self, html: str, source_url: str) -> list[dict]:
-        soup    = BeautifulSoup(html, "html.parser")
-        records = []
+        """
+        ChokaDetail ページ構造:
+          <h2>2026年04月01日</h2>
+          <div class="blog-top"><h3 class="title">船名</h3></div>
+          <div class="blog-middle">魚種\nサイズ　数量\n船長コメント：...</div>
+          <div class="blog-bottom">posted by ...</div>
+        """
+        soup     = BeautifulSoup(html, "html.parser")
+        records  = []
 
         # 日付
-        h2      = soup.find("h2")
+        h2       = soup.find("h2")
         date_str = parse_date_jp(h2.get_text()) if h2 else None
 
-        # h3 ブロックを船種として扱う
-        # h3 が複数ある場合は複数の boat_name に分ける
-        h3_list = soup.find_all("h3")
+        # blog-top / blog-middle のペアを処理
+        blog_tops = soup.find_all("div", class_="blog-top")
+        if blog_tops:
+            for top in blog_tops:
+                h3        = top.find("h3")
+                boat_name = h3.get_text(strip=True) if h3 else None
 
-        if not h3_list:
-            # h3 なし: ページ全体を1レコードとして扱う
-            details = self._extract_details_from_text(soup.get_text("\n"))
-            if details:
+                # 直後の blog-middle を取得
+                middle = top.find_next_sibling("div", class_="blog-middle")
+                if not middle:
+                    continue
+                block_text = middle.get_text("\n")
+                details    = self._extract_details_from_text(block_text)
+                if not details:
+                    continue
+
+                counts    = [d["count"] for d in details if d.get("count")]
+                count_max = max(counts) if counts else None
                 records.append({
                     "date":           date_str,
-                    "boat_name":      None,
+                    "boat_name":      boat_name,
                     "count_min":      None,
-                    "count_max":      None,
-                    "condition_text": None,
+                    "count_max":      count_max,
+                    "condition_text": self._extract_condition(block_text),
                     "details":        details,
                 })
             return records
 
-        for h3 in h3_list:
-            boat_name = h3.get_text(strip=True)
-            # h3 直後のテキストノードを収集（次の h3 または h2 まで）
-            text_lines = []
-            for sibling in h3.next_siblings:
-                if sibling.name in ("h3", "h2"):
-                    break
-                if hasattr(sibling, "get_text"):
-                    text_lines.append(sibling.get_text("\n"))
-                elif isinstance(sibling, str):
-                    text_lines.append(sibling)
-
-            block_text = "\n".join(text_lines)
-            details    = self._extract_details_from_text(block_text)
-            if not details:
-                continue
-
-            # 数量の集計（全魚種の最大数をトップレベルに）
-            counts    = [d["count"] for d in details if d.get("count")]
-            count_max = max(counts) if counts else None
-
+        # フォールバック: blog-top なし → ページ全体テキストから抽出
+        details = self._extract_details_from_text(soup.get_text("\n"))
+        if details:
+            counts = [d["count"] for d in details if d.get("count")]
             records.append({
                 "date":           date_str,
-                "boat_name":      boat_name,
+                "boat_name":      None,
                 "count_min":      None,
-                "count_max":      count_max,
-                "condition_text": self._extract_condition(block_text),
+                "count_max":      max(counts) if counts else None,
+                "condition_text": None,
                 "details":        details,
             })
-
         return records
 
     def _extract_details_from_text(self, text: str) -> list[dict]:
+        """
+        gyosan.jp の blog-middle テキストから釣果詳細を抽出する。
+
+        2パターンに対応:
+          A) 同一行: "アジ 23-37cm 16-49匹"
+          B) 複数行: 行1="トラフグ"  行2="2.0-3.5 kg　0-1 匹"
+        """
         details = []
         text    = normalize_num(text)
+        lines   = [l.strip() for l in text.splitlines()]
 
-        for line in text.splitlines():
-            line = line.strip()
+        i = 0
+        while i < len(lines):
+            line = lines[i]
             if not line or len(line) < 2:
+                i += 1
                 continue
 
             # スキップキーワード
             if any(skip in line for skip in _FISH_SKIP):
+                i += 1
                 continue
 
-            # 魚種 + サイズ + 数量のパターン
-            # 例: "アジ 23-37cm 16-49匹"
-            m = re.match(
-                r"^([^\d\s]+)\s+"
+            # パターン A: 同一行に魚種+サイズ+数量
+            m_a = re.match(
+                r"^([^\d\s]+?)\s+"
                 r"([\d.]+[^\d\s]*[\d.]+\s*(?:cm|kg|g))?\s*"
-                r"([\d]+[^\d]*[\d]+\s*(?:匹|本|尾|杯))?",
+                r"([\d]+[^\d]*[\d]+\s*(?:匹|本|尾|杯))",
                 line
             )
-            if not m or not m.group(1):
+            if m_a:
+                fish      = m_a.group(1).strip("【】「」（）()・")
+                size_raw  = (m_a.group(2) or "").strip()
+                count_raw = (m_a.group(3) or "").strip()
+                count_min, count_max = parse_count(count_raw)
+                details.append({
+                    "species_name":     fish,
+                    "species_name_raw": fish,
+                    "count":            count_max,
+                    "unit":             self._detect_unit(count_raw),
+                    "size_text":        parse_size(size_raw) if size_raw else None,
+                })
+                i += 1
                 continue
 
-            fish = m.group(1).strip("【】「」（）()・")
-            if len(fish) < 1 or fish.isdigit():
+            # パターン B: この行が魚種名のみ → 近傍行にサイズ/数量（空行を挟む場合あり）
+            is_fish_only = re.match(r"^[^\d\s]{1,10}$", line) and not re.search(r"\d", line)
+            if is_fish_only:
+                # 最大3行先まで空行をスキップして数量行を探す
+                matched = False
+                for j in range(i + 1, min(i + 5, len(lines))):
+                    next_line = lines[j]
+                    if not next_line:
+                        continue
+                    m_b = re.search(
+                        r"([\d.]+[^\d\s]*[\d.]+\s*(?:cm|kg|g))?"
+                        r"[\s　]*([\d]+[^\d]*[\d]+\s*(?:匹|本|尾|杯))",
+                        next_line
+                    )
+                    if m_b:
+                        fish      = line.strip("【】「」（）()・")
+                        size_raw  = (m_b.group(1) or "").strip()
+                        count_raw = (m_b.group(2) or "").strip()
+                        count_min, count_max = parse_count(count_raw)
+                        details.append({
+                            "species_name":     fish,
+                            "species_name_raw": fish,
+                            "count":            count_max,
+                            "unit":             self._detect_unit(count_raw),
+                            "size_text":        parse_size(size_raw) if size_raw else None,
+                        })
+                        i = j + 1
+                        matched = True
+                    break  # 空行でない最初の行で処理終了（match有無問わず）
+                if not matched:
+                    i += 1
                 continue
 
-            size_raw  = (m.group(2) or "").strip()
-            count_raw = (m.group(3) or "").strip()
-
-            # 数量が取れなければ行全体から探す
-            if not count_raw:
-                cm = re.search(r"(\d+)[^\d]*(\d+)\s*(?:匹|本|尾|杯)", line)
-                if cm:
-                    count_raw = cm.group(0)
-
-            count_min, count_max = parse_count(count_raw) if count_raw else (None, None)
-
-            details.append({
-                "species_name":     fish,
-                "species_name_raw": fish,
-                "count":            count_max,
-                "unit":             self._detect_unit(count_raw or line),
-                "size_text":        parse_size(size_raw) if size_raw else None,
-            })
+            i += 1
 
         return details
 

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .gyosan        import GyosanHandler
 from .blogphp       import BlogPhpHandler
 from .wordpress     import WordPressHandler

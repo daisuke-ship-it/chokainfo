@@ -1,3 +1,4 @@
+from __future__ import annotations
 """ハンドラー抽象基底クラス"""
 from abc import ABC, abstractmethod
 import logging

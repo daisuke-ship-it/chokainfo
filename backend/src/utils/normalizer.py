@@ -1,3 +1,4 @@
+from __future__ import annotations
 """日付・数量・魚種名 の正規化ユーティリティ"""
 import re
 import unicodedata
