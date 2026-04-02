@@ -4,7 +4,8 @@
 
 ### 作業前に必ず確認すること
 - 設計思想・改善方針は `/context` コマンドで Knowledge フォルダを読み込む
-- 作業記録は `/log` コマンドで作業ログ MD に追記する
+- 現在の実装状態・次のアクションは `/status` コマンドで確認する
+- 作業後は `/log` コマンドで作業記録 MD に追記する（毎回・指示なくても行う）
 
 ### 参照すべきドキュメント
 
@@ -36,7 +37,8 @@
 
 ### カスタムコマンド（`.claude/commands/`）
 - `/context` — Knowledge フォルダの設計文書をすべて読み込む
-- `/log` — 作業内容を作業記録 MD に追記する
+- `/status` — プロジェクトの現在状態・次のアクションを確認する
+- `/log`    — 作業内容を作業記録 MD に追記する
 
 ---
 
@@ -62,16 +64,25 @@ chokainfo/
 │       ├── src/
 │       ├── public/
 │       └── package.json
-├── backend/            # Python スクレイパー・AI サマリー → GitHub Actions で実行
-│   ├── config/
-│   │   ├── extraction.yaml
-│   │   └── shipyards.yaml
+├── backend/            # Python スクレイパー → GitHub Actions で実行
 │   ├── src/
-│   │   ├── scraper.py
-│   │   ├── summarizer.py
-│   │   └── migrate.py
+│   │   ├── scraper.py           # v4 スリムオーケストレーター
+│   │   ├── summarizer.py        # AI サマリー生成
+│   │   ├── handlers/            # ハンドラー群（下記参照）
+│   │   │   ├── __init__.py      # HANDLER_MAP + get_handler()
+│   │   │   ├── base.py          # BaseHandler（fetch→hash→parse→save）
+│   │   │   ├── gyosan.py        # gyosan.jp CMS（24件）
+│   │   │   ├── blogphp.py       # blog.php CMS（6件）
+│   │   │   ├── wordpress.py     # WP REST API + Claude fallback（9件）
+│   │   │   ├── rss.py           # RSS/RDF フィード
+│   │   │   └── claude_handler.py# Claude Haiku fallback（19件）
+│   │   └── utils/
+│   │       ├── fetch.py         # fetch_html, compute_md5, html_to_text
+│   │       ├── db.py            # get_latest_html_hash, save_catch_raw, save_catches
+│   │       └── normalizer.py    # parse_date_jp, parse_count, parse_size
+│   ├── config/
+│   │   └── extraction.yaml
 │   ├── logs/           # .gitignore 済み
-│   ├── sample/
 │   └── requirements.txt
 ├── .gitignore
 └── CLAUDE.md
@@ -87,13 +98,53 @@ chokainfo/
 - **デプロイ**: Vercel（Root Directory: `apps/frontend`）
 
 ### バックエンド（backend/）
-- **言語**: Python 3.11
-- **スクレイピング**: requests + BeautifulSoup
+- **言語**: Python 3.11（GitHub Actions）、ローカルは 3.9 でも動作
+- **スクレイピング**: requests + BeautifulSoup4 + lxml
 - **AI 解析**: Claude API (claude-haiku-4-5-20251001)
-- **実行環境**: GitHub Actions
+- **実行環境**: GitHub Actions（毎日15〜19時JST）
+- **ローカル実行**: `cd backend && python3 src/scraper.py --dry-run --shipyard-ids <ID>`
 
 ### データベース
 - **Supabase** (PostgreSQL) / URL: https://lkejlcruzydaequbchav.supabase.co
+
+---
+
+## スクレイパー v4 設計
+
+### ハンドラーパターン
+`shipyards.scrape_config.handler` の値でディスパッチ。未設定は `claude` フォールバック。
+
+| handler | 対象 | 件数 | Claude 使用 |
+|---------|------|------|------------|
+| `gyosan` | gyosan.jp CMS（/category/Choka/） | 24件 | 不要 |
+| `blogphp` | blog.php CMS | 6件 | 不要 |
+| `wordpress` | WordPress REST API | 9件 | テーブルなし時のみ |
+| `rss` | RSS/RDF フィード | 0件（現在） | 不要 |
+| `claude` | その他・未分類 | 19件 | 常時 |
+
+### scrape_config の例
+```json
+{ "handler": "gyosan" }
+{ "handler": "gyosan", "list_path": "/category/Realtime/1/" }
+{ "handler": "wordpress", "catch_category_id": 5 }
+{ "handler": "wordpress", "feed_path": null }
+{ "handler": "blogphp" }
+```
+
+### html_hash 差分検知
+- `catch_raw` テーブルに前回の html_hash（MD5）を保存
+- ハッシュが変化していない船宿はパース・DB保存をスキップ（Claude API コール削減）
+
+### ローカルテスト
+```bash
+cd backend
+python3 src/scraper.py --dry-run --shipyard-ids 4        # 中山丸1件
+python3 src/scraper.py --dry-run --shipyard-ids 4 37 9   # 複数指定
+python3 src/scraper.py --shipyard-ids 4                  # 実際に保存
+```
+※ローカルの `.env` は `backend/.env`（git 管理外）
+
+---
 
 ## デプロイ構成
 
@@ -109,6 +160,16 @@ chokainfo/
 - `SITE_URL`（`https://www.chokainfo.com`）
 - `REVALIDATE_SECRET`
 
+### GitHub Actions 手動実行（gh CLI がない場合）
+```bash
+TOKEN=$(security find-internet-password -s github.com -w)
+curl -X POST \
+  -H "Authorization: token $TOKEN" \
+  -H "Accept: application/vnd.github.v3+json" \
+  "https://api.github.com/repos/daisuke-ship-it/chokainfo/actions/workflows/scraper.yml/dispatches" \
+  -d '{"ref":"main"}'
+```
+
 ---
 
 ## 競合ポジショニング
@@ -121,7 +182,6 @@ chokainfo/
 | 海快晴・釣り天気.jp | 天候・海況特化・釣果一次情報は持たない | 釣果×天候の相関で差別化 |
 
 **差別化軸**: 船宿横断の正規化釣果データ＋天候/潮汐との相関分析＋AIサマリー記事
-「釣果一覧」では戦えない。「比較・傾向・再現性」を前面に出す。
 
 ---
 
@@ -140,13 +200,7 @@ chokainfo/
 - モデル: claude-haiku-4-5-20251001
 - 処理: 1日1回バッチ（GitHub Actionsに組み込む）
 - コスト: 月$1未満（約150円以下）
-- コメントはバラつくので正規化不要、ある情報だけでサマリー生成
-- 保存先: Supabaseの`ai_summaries`テーブルにキャッシュ
-
-### その他の差別化
-- グラフ可視化（釣果トレンド・昨年同期比）
-- スマホ特化のUX（釣り場でスマホで見るユーザー重視）
-- 船宿情報の充実（Google評価・港情報・連絡先）
+- 保存先: Supabase の `ai_summaries` テーブルにキャッシュ
 
 ---
 
@@ -158,39 +212,7 @@ chokainfo/
 | 魚種別 | `/fish/tachiuo` | 特定魚種の詳細釣果・グラフ・魚種別AIサマリー |
 | 船宿別 | `/yado/[name]` | 特定船宿の全魚種釣果履歴・船宿情報 |
 | グラフ・分析 | `/analysis` | 魚種×期間のトレンド比較・昨年比 |
-
----
-
-## 画面設計（スマホ優先）
-
-### トップページ構成
-1. ヘッダー（エリア切り替え）
-2. エリアAIサマリー（1〜2行）
-3. 魚種トレンドバー（直近7日 vs 前7日・好調/横ばい/鈍化）
-4. フィルター（エリア / 魚種 / 期間）
-5. 本日の釣果サマリー（3列2行: 天気・潮汐・出船数 / 平均釣果・釣果範囲・サイズcm）
-6. 釣果一覧テーブル（船宿+釣り方サブテキスト / 釣果 / サイズ / 日付 / 記事リンク）
-7. グラフタブ（直近30日釣果平均推移）
-8. AdSense枠（カード間・テーブル下）
-
-### スマホUI方針
-- ナビ：下部固定タブバー
-- 魚種カード：横スクロール or 2列グリッド
-- テーブル：横スクロール対応（左固定カラム）
-- グラフ：タップでデータポイント表示
-
-### デザイン方針
-- 和風・渋めデザイン（深海ブルー・墨色・金色アクセント）
-- スマホファーストのレスポンシブ
-- 競合（funaduri.jp）がレガシーなのでモダンUIで差別化
-
----
-
-## 自動化・差分取得の方針
-- 実行タイミング: 毎日15〜19時（JST）毎時実行
-- 理由: その日の釣果を見て夕方に予約する釣り人がターゲット
-- 差分取得: 前回スクレイピング時のHTMLハッシュと比較し、変化がなければClaude APIを呼ばない
-- コスト最適化: HTML差分がある船宿のみClaude APIで再解析する
+| **管理画面** | `/admin/shipyards` | 船宿追加・ハンドラー設定・dry-run（実装予定） |
 
 ---
 
@@ -205,112 +227,41 @@ shipyards         -- 船宿マスタ（scrape_configでパース設定管理）
 catches           -- 釣果データ（メインテーブル）
 catch_raw         -- スクレイピング生データ（html_hash・差分検知・再解析用）
 environment_data  -- 天気・潮汐データ（外部APIから取得）
-articles          -- AIサマリー記事（daily_summary/weekly/curation）
+articles          -- AIサマリー記事
 requests          -- ユーザーリクエストフォーム
-tachiuo_catch     -- 初期開発用暫定テーブル（将来廃止予定）
 ```
 
-### 追加予定テーブル
+### `shipyards` の重要カラム
+- `scrape_config` (jsonb): ハンドラー設定。`{"handler": "gyosan"}` 等
+- `is_active` (boolean): false にすればスクレイパーがスキップ
+- `url`: スクレイピング対象 URL
 
-#### `ports`（港マスタ）
-```sql
-CREATE TABLE ports (
-  id         integer PRIMARY KEY,
-  name       text NOT NULL,       -- '走水港'など
-  area_id    integer REFERENCES areas(id),
-  lat        numeric,             -- 将来の地図表示用
-  lng        numeric,
-  created_at timestamptz DEFAULT now()
-);
-```
-
-#### `ai_summaries`（AIサマリー格納）
-```sql
-CREATE TABLE ai_summaries (
-  id            bigint PRIMARY KEY,
-  summary_type  text NOT NULL,    -- 'shipyard' | 'fish_species' | 'area'
-  target_id     integer,          -- shipyard_id or fish_species_id or area_id
-  target_date   date NOT NULL,
-  summary_text  text NOT NULL,
-  raw_input     text,             -- 元テキスト（ハルシネーション対策）
-  model_used    text,             -- 'claude-haiku-4-5-20251001'
-  created_at    timestamptz DEFAULT now()
-);
-```
-
-### `catches`テーブル重要カラム
-- `catch_type`: 'ship_total'（船中）/ 'personal'（個人）/ 'top_angler'（竿頭）
-- `time_slot`: '午前' / '午後' / '終日'（text型のまま）
-- `fishing_method_id`: 釣り方（釣り方が違う場合は別レコード）
+### `catches` の重要カラム
+- `catch_type`: 'ship_total' / 'personal' / 'top_angler'
 - `sail_date`: 出船日（≠投稿日）
-- `confidence_score`: 抽出信頼度 0.0〜1.0（将来のレビューUI用）
-- `source_trace`: どの段落・行から抽出したか（再解析用）
-
-### `catches`追加予定カラム
-```sql
-ALTER TABLE catches ADD COLUMN boat_name     text;         -- 複数隻対応
-ALTER TABLE catches ADD COLUMN location_text text;         -- '走水沖'など
-ALTER TABLE catches ADD COLUMN depth_min_m   integer;
-ALTER TABLE catches ADD COLUMN depth_max_m   integer;
-ALTER TABLE catches ADD COLUMN condition_text text;        -- 船長コメント原文
-ALTER TABLE catches ADD COLUMN no_sail       boolean DEFAULT false;
-ALTER TABLE catches ADD COLUMN is_relay      boolean DEFAULT false;
-ALTER TABLE catches ADD COLUMN relay_group   text;
-```
-
-### `shipyards`追加予定カラム
-```sql
-ALTER TABLE shipyards ADD COLUMN port_id              integer REFERENCES ports(id);
-ALTER TABLE shipyards ADD COLUMN phone                text;
-ALTER TABLE shipyards ADD COLUMN address              text;
-ALTER TABLE shipyards ADD COLUMN reservation_url      text;
-ALTER TABLE shipyards ADD COLUMN google_rating        numeric;
-ALTER TABLE shipyards ADD COLUMN google_review_count  integer;
-ALTER TABLE shipyards ADD COLUMN google_place_id      text;
-ALTER TABLE shipyards ADD COLUMN google_updated_at    timestamptz;
-```
-
----
-
-## 対象エリア・魚種
-
-### エリア
-- 初期: 東京湾、相模湾
-
-### 魚種
-- 現在対応済み: タチウオ・アジ・シーバス・サワラ
-- 拡張予定（優先順）: ヤリイカ・マルイカ・カワハギ・トラフグ・マゴチ・マダイ・シロギス
-
-### 船宿拡充方針
-東京湾の金沢八景・横浜周辺を優先（検索流入が多いエリア）
-
----
-
-## SEO戦略（PV最大化）
-- 「魚種 × エリア × 月」の長尾KWを大量生成
-- AIサマリー記事で「今週の東京湾タチウオ釣果まとめ」等を自動生成
-- 天候・潮汐との相関データで「一次情報に匹敵する独自価値」を付与
-- Googleの低品質コンテンツ判定を避けるため、統計・グラフ・比較を必ず入れる
+- `boat_name`: 便名（午前船・午後船等）
+- `condition_text`: 船長コメント原文
 
 ---
 
 ## 設計方針（重要）
-- 船宿ごとのフォーマット差異はClaude APIで吸収する
-- 生データ(catch_raw)は必ず保持し、html_hashで差分検知・再解析できるようにする
-- 同じ船宿で複数船・午前午後がある場合はcount_max/size_max_cmの最大値を採用
-- 釣り方（エサ/ルアー/テンヤ）が違う場合は別レコードとして管理
+- 船宿ごとのフォーマット差異は Claude API で吸収する
+- 生データ(catch_raw)は必ず保持し、html_hash で差分検知・再解析できるようにする
+- 同じ船宿で複数船・午前午後がある場合は count_max/size_max_cm の最大値を採用
 - 個人名・顔写真は保持しない（竿頭情報は匿名化）
-- 信頼度スコアはMVPでは表示しないが、カラムとして必ず格納する
 
 ---
 
 ## 次のアクション（優先順）
-1. DBマイグレーション実行（ports・ai_summariesテーブル追加、既存テーブルへのカラム追加）
-2. AIサマリー実装（スクレイパーにコメント取得 → Haiku呼び出し → Supabase保存）
-3. ページ追加実装（魚種別・船宿別・グラフ分析）
-4. 船宿・魚種の拡充
-5. AdSense枠の最適化
-6. 昨年同月比・グラフ強化
-7. リクエスト募集フォーム
-8. 船宿への送客導線（予約リンク）
-9. 信頼度スコア表示・レビューUI
+
+### 直近（管理画面フェーズA）
+1. **管理画面** `apps/frontend/src/app/admin/shipyards/`
+   - 船宿一覧・ステータス表示（ハンドラー / is_active / 最終取得日時）
+   - 新規船宿追加フォーム（URL入力 → ハンドラー自動判定 → dry-run → 保存）
+   - 認証: 環境変数 `ADMIN_PASSWORD` によるシンプルなパスワード認証
+
+### 中期
+2. **DB カラム追加**: `shipyards.last_scraped_at`（管理画面表示用）
+3. **AIサマリー実装**: summarizer.py の本格稼働
+4. **魚種別・船宿別ページ**: `/fish/[slug]`、`/yado/[slug]`
+5. **船宿・魚種の拡充**（全国展開への布石）
