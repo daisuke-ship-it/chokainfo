@@ -58,7 +58,10 @@ class WordPressHandler(BaseHandler):
             pass
 
         # ── RSS フォールバック ─────────────────────────────────────────────
+        # feed_path が明示的に null の場合はフォールバックしない
         feed_path = config.get("feed_path", "/feed/")
+        if feed_path is None:
+            raise RuntimeError("WP REST API が利用できず、RSS フォールバックも無効です")
         feed_url  = urljoin(base_url + "/", feed_path.lstrip("/"))
         resp = requests.get(feed_url, headers=HEADERS, timeout=REQUEST_TIMEOUT,
                             verify=config.get("ssl_verify", True))
