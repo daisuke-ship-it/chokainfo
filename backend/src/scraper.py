@@ -229,6 +229,7 @@ def main():
     # ── ハンドラーインポート（sys.path 調整）─────────────────────────────
     sys.path.insert(0, str(Path(__file__).parent))
     from handlers import get_handler, HANDLER_MAP
+    from utils.db import update_last_scraped_at
 
     # ── マスタデータ取得 ──────────────────────────────────────────────────
     try:
@@ -293,10 +294,14 @@ def main():
 
         if result["error"]:
             errors.append(f"{yard_name}: {result['error']}")
+            if not args.dry_run:
+                update_last_scraped_at(db, yard_id, error=result["error"])
         elif result["skipped"]:
             skipped += 1
         else:
             total_saved += result["saved"]
+            if not args.dry_run:
+                update_last_scraped_at(db, yard_id)
             if args.dry_run and result["sample"]:
                 logger.info(f"  [dry-run] サンプル:")
                 import json

@@ -120,3 +120,17 @@ def save_catches(
             logger.error(f"  [catches] 保存失敗: {e}")
 
     return saved
+
+
+def update_last_scraped_at(db, shipyard_id: int, error: str | None = None) -> None:
+    """スクレイピング後に last_scraped_at と last_error を更新"""
+    now = datetime.now().isoformat()
+    updates: dict = {"last_scraped_at": now}
+    if error is None:
+        updates["last_error"] = None
+    else:
+        updates["last_error"] = str(error)[:500]
+    try:
+        db.table("shipyards").update(updates).eq("id", shipyard_id).execute()
+    except Exception:
+        pass
