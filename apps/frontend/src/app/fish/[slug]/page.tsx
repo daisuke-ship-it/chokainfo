@@ -207,31 +207,35 @@ export default async function FishPage({ params }: { params: PageParams }) {
   })
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+    <div style={{ minHeight: '100vh' }}>
 
       {/* ── Header ─────────────────────────────────────────── */}
-      <SiteHeader updatedAt={nowStr} subtitle="東京湾 · 相模湾" />
+      <SiteHeader updatedAt={nowStr} subtitle={content.name} />
 
       {/* ── Hero + 魚種タブ ──────────────────────────────── */}
-      <div style={{ background: 'var(--primary)', paddingTop: 40, paddingBottom: 44 }}>
-        <div className="page-container">
+      <section style={{ position: 'relative', overflow: 'hidden' }}>
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(135deg, rgba(0,212,200,0.06) 0%, transparent 40%, rgba(0,212,200,0.03) 100%)',
+        }} />
+        <div className="page-container" style={{ position: 'relative', padding: '32px 16px 24px' }}>
 
           {/* パンくずナビ */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 10 }}>
-            <Link href="/" style={{ color: 'rgba(255,255,255,0.55)' }}>トップ</Link>
-            <span>›</span>
-            <span style={{ color: 'rgba(255,255,255,0.75)' }}>{content.name}釣果情報</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-muted)', marginBottom: 12 }}>
+            <Link href="/" style={{ color: 'var(--text-secondary)' }}>トップ</Link>
+            <span style={{ opacity: 0.5 }}>›</span>
+            <Link href="/fish/tachiuo" style={{ color: 'var(--text-secondary)' }}>魚種</Link>
+            <span style={{ opacity: 0.5 }}>›</span>
+            <span style={{ color: 'var(--text-primary)' }}>{content.name}</span>
           </div>
 
-          <div style={{ marginBottom: 6 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', color: 'var(--accent)', textTransform: 'uppercase' }}>
-              FISHING REPORT — DAILY UPDATE
-            </span>
-          </div>
-          <h1 style={{ fontSize: 'clamp(16px, 3vw, 24px)', fontWeight: 700, color: 'white', fontFamily: 'var(--font-serif)', letterSpacing: '0.04em', lineHeight: 1.25, marginBottom: 6 }}>
-            東京湾 {content.name}釣果まとめ
+          <p className="section-label" style={{ marginBottom: 8, color: 'var(--color-cyan)' }}>
+            SPECIES FISHING REPORT
+          </p>
+          <h1 style={{ marginBottom: 6 }}>
+            {content.name}釣果まとめ
           </h1>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', maxWidth: 480, lineHeight: 1.6 }}>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', maxWidth: 460, lineHeight: 1.7 }}>
             {content.description}
           </p>
 
@@ -244,14 +248,13 @@ export default async function FishPage({ params }: { params: PageParams }) {
                   key={fc.slug}
                   href={`/fish/${fc.slug}`}
                   style={{
-                    padding: '5px 16px',
-                    borderRadius: 'var(--radius-pill)',
-                    fontSize: 13, fontWeight: isActive ? 700 : 400,
-                    border: isActive ? '1.5px solid #d4a017' : '1px solid rgba(255,255,255,0.2)',
-                    background: isActive ? 'rgba(212,160,23,0.15)' : 'transparent',
-                    color: isActive ? '#d4a017' : 'rgba(255,255,255,0.6)',
-                    whiteSpace: 'nowrap',
-                    transition: 'all 0.15s',
+                    padding: '5px 14px',
+                    borderRadius: 100,
+                    fontSize: 12, fontWeight: isActive ? 600 : 400,
+                    border: isActive ? '1px solid var(--color-cyan)' : '1px solid var(--border-default)',
+                    background: isActive ? 'var(--color-cyan-dim)' : 'transparent',
+                    color: isActive ? 'var(--color-cyan)' : 'var(--text-secondary)',
+                    whiteSpace: 'nowrap' as const,
                   }}
                 >
                   {fc.name}
@@ -260,30 +263,31 @@ export default async function FishPage({ params }: { params: PageParams }) {
             })}
           </div>
         </div>
-      </div>
+      </section>
 
       {/* ── Main ─────────────────────────────────────────── */}
-      <main style={{ padding: '40px 0 100px' }}>
-        <div className="page-container">
-          <FishDashboard
-            records={records}
-            envData={envData}
-            aiSummaries={aiSummaries}
-            areas={areas}
-            fishId={fishId}
-            content={content}
-          />
-        </div>
+      <main className="page-container" style={{ paddingTop: 8, paddingBottom: 100 }}>
+        <FishDashboard
+          records={records}
+          envData={envData}
+          aiSummaries={aiSummaries}
+          areas={areas}
+          fishId={fishId}
+          content={content}
+        />
       </main>
 
       {/* ── Footer ───────────────────────────────────────── */}
-      <footer style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)', padding: '32px 0' }}>
-        <div className="page-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-          <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-            © {new Date().getFullYear()} 釣果情報.com — 東京湾・相模湾 船釣り釣果情報
+      <footer style={{ borderTop: '1px solid var(--border-subtle)', padding: '28px 0' }}>
+        <div className="page-container" style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          flexWrap: 'wrap', gap: 8,
+        }}>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+            &copy; {new Date().getFullYear()} 釣果情報.com
           </span>
-          <span style={{ fontSize: 11, color: 'var(--border-strong)' }}>
-            データは各船宿サイトより自動収集しています
+          <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+            データは各船宿サイトより自動収集
           </span>
         </div>
       </footer>

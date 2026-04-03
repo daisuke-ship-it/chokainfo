@@ -233,81 +233,72 @@ export default async function AreaPage({ params }: { params: PageParams }) {
   })
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+    <div style={{ minHeight: '100vh' }}>
 
       {/* ── Header ─────────────────────────────────────────────── */}
       <SiteHeader updatedAt={nowStr} subtitle={config.name} />
 
-      {/* ── Hero with background image ───────────────────────────── */}
-      <div style={{ position: 'relative', overflow: 'hidden', minHeight: 280, marginBottom: '-60px' }}>
-        <img
-          src="https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1200&q=80"
-          alt="東京湾夜景"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }}
-        />
+      {/* ── Hero ────────────────────────────────────────────────── */}
+      <section style={{ position: 'relative', overflow: 'hidden' }}>
         <div style={{
           position: 'absolute', inset: 0,
-          background: 'linear-gradient(to bottom, rgba(5,8,15,0.3) 0%, rgba(5,8,15,0.95) 100%)',
+          background: 'linear-gradient(135deg, rgba(0,212,200,0.06) 0%, transparent 40%, rgba(0,212,200,0.03) 100%)',
         }} />
-        <div style={{ position: 'relative', paddingTop: 40, paddingBottom: 80 }}>
-          <div className="page-container">
-            {/* パンくずナビ */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 14 }}>
-              <Link href="/" style={{ color: 'rgba(255,255,255,0.55)' }}>トップ</Link>
-              <span>›</span>
-              <span style={{ color: 'rgba(255,255,255,0.75)' }}>{config.name}</span>
-            </div>
-            <h1 style={{
-              fontSize: 'clamp(26px, 5vw, 40px)',
-              fontWeight: 700, color: '#f0f4ff',
-              fontFamily: 'var(--font-serif)',
-              letterSpacing: '0.04em', lineHeight: 1.2, marginBottom: 12,
-            }}>
-              {config.name}の船釣り釣果まとめ
-            </h1>
-            <p style={{ fontSize: '0.9rem', color: '#8899bb', maxWidth: 480, lineHeight: 1.6 }}>
-              {config.description}
-            </p>
+        <div className="page-container" style={{ position: 'relative', padding: '32px 16px 28px' }}>
+          {/* パンくずナビ */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-muted)', marginBottom: 12 }}>
+            <Link href="/" style={{ color: 'var(--text-secondary)' }}>トップ</Link>
+            <span style={{ opacity: 0.5 }}>›</span>
+            <span style={{ color: 'var(--text-primary)' }}>{config.name}</span>
           </div>
+          <p className="section-label" style={{ marginBottom: 8, color: 'var(--color-cyan)' }}>
+            AREA FISHING REPORT
+          </p>
+          <h1 style={{ marginBottom: 6 }}>
+            {config.name}の船釣り釣果
+          </h1>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', maxWidth: 460, lineHeight: 1.7 }}>
+            {config.description}
+          </p>
         </div>
-      </div>
+      </section>
 
       {/* ── Main ─────────────────────────────────────────────────── */}
-      <main style={{ position: 'relative', padding: '20px 0 100px' }}>
-        <div className="page-container">
-          {records.length === 0 ? (
-            <div style={{
-              textAlign: 'center', padding: '80px 20px',
-              background: 'var(--surface)',
-              borderRadius: 'var(--radius-lg)',
-              border: '1px solid var(--border)',
-            }}>
-              <p style={{ fontSize: 32, marginBottom: 10 }}>🎣</p>
-              <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>現在、釣果データがありません</p>
-            </div>
-          ) : (
-            <CatchDashboard
-              records={records}
-              envData={envData}
-              areas={areas}
-              fishSpeciesList={fishSpeciesList}
-              aiSummaries={aiSummaries}
-              speciesGroupMap={speciesGroupMap}
-              initialArea={config.name}
-              initialFish={null}
-            />
-          )}
-        </div>
+      <main className="page-container" style={{ paddingTop: 8, paddingBottom: 100 }}>
+        {records.length === 0 ? (
+          <div style={{
+            textAlign: 'center', padding: '60px 20px',
+            background: 'var(--bg-surface)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border-subtle)',
+          }}>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>現在、釣果データがありません</p>
+          </div>
+        ) : (
+          <CatchDashboard
+            records={records}
+            envData={envData}
+            areas={areas}
+            fishSpeciesList={fishSpeciesList}
+            aiSummaries={aiSummaries}
+            speciesGroupMap={speciesGroupMap}
+            initialArea={config.name}
+            initialFish={null}
+          />
+        )}
       </main>
 
       {/* ── Footer ─────────────────────────────────────────────── */}
-      <footer style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)', padding: '32px 0' }}>
-        <div className="page-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-          <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-            © {new Date().getFullYear()} 釣果情報.com — {config.name} 船釣り釣果情報
+      <footer style={{ borderTop: '1px solid var(--border-subtle)', padding: '28px 0' }}>
+        <div className="page-container" style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          flexWrap: 'wrap', gap: 8,
+        }}>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+            &copy; {new Date().getFullYear()} 釣果情報.com — {config.name}
           </span>
-          <span style={{ fontSize: 11, color: 'var(--border-strong)' }}>
-            データは各船宿サイトより自動収集しています
+          <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+            データは各船宿サイトより自動収集
           </span>
         </div>
       </footer>

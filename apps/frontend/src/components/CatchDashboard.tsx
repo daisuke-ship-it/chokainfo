@@ -291,21 +291,6 @@ function SummaryCard({ records, envData, period, sizeUnit = 'cm', fishAliases = 
   const catchRangeMin = allCounts.length > 0 ? Math.min(...allCounts) : null
   const catchRangeMax = allCounts.length > 0 ? Math.max(...allCounts) : null
 
-  // DEBUG: ブラウザコンソールで確認（確認後削除）
-  if (typeof window !== 'undefined' && fishAliases) {
-    console.group('[SummaryCard DEBUG] fishAliases:', fishAliases)
-    records.forEach((r) => {
-      const dc = detailCounts(r)
-      console.log(
-        `${r.shipyard_name} | count_min=${r.count_min} count_max=${r.count_max}`,
-        '| dc:', dc,
-        '| details:', r.catch_details.map(d => `${d.species_name}:${d.count}`)
-      )
-    })
-    console.log('allCounts:', allCounts)
-    console.log('catchRangeMin:', catchRangeMin, 'catchRangeMax:', catchRangeMax)
-    console.groupEnd()
-  }
   const catchRange =
     catchRangeMin !== null && catchRangeMax !== null && catchRangeMin !== catchRangeMax
       ? `${catchRangeMin}〜${catchRangeMax}`
