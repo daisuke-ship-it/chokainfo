@@ -313,21 +313,33 @@ export default async function Home() {
       <SiteHeader updatedAt={nowStr} />
 
       {/* ── Hero ─────────────────────────────────────────── */}
-      <section style={{ position: 'relative', overflow: 'hidden' }}>
+      <section style={{ position: 'relative', overflow: 'hidden', minHeight: 220 }}>
         <div style={{
           position: 'absolute', inset: 0,
-          background: 'linear-gradient(135deg, rgba(0,212,200,0.06) 0%, transparent 40%, rgba(0,212,200,0.03) 100%)',
+          background: 'linear-gradient(160deg, rgba(0,212,200,0.08) 0%, rgba(4,8,16,0.9) 40%, rgba(0,212,200,0.04) 100%)',
         }} />
-        <div className="page-container" style={{ position: 'relative', padding: '40px 16px 32px' }}>
-          <p className="section-label" style={{ marginBottom: 10, color: 'var(--color-cyan)' }}>
-            DAILY FISHING REPORT
+        <div style={{
+          position: 'absolute', inset: 0, opacity: 0.12,
+          background: 'radial-gradient(ellipse 80% 60% at 70% 20%, rgba(0,212,200,0.3) 0%, transparent 70%)',
+        }} />
+        <div className="page-container" style={{ position: 'relative', padding: '48px 16px 44px' }}>
+          <p style={{
+            fontSize: 10, fontWeight: 700, letterSpacing: '0.16em',
+            color: 'var(--color-cyan)', textTransform: 'uppercase' as const, marginBottom: 12,
+          }}>
+            FISHING REPORT — DAILY UPDATE
           </p>
-          <h1 style={{ marginBottom: 8 }}>
-            関東圏の船釣り釣果
+          <h1 style={{ marginBottom: 10, fontSize: 'clamp(24px, 5vw, 36px)' }}>
+            関東圏の船釣り釣果まとめ
           </h1>
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)', maxWidth: 420, lineHeight: 1.7 }}>
-            複数船宿の釣果データを毎日自動収集。
-            <br />エリアを選んで最新の釣況を確認できます。
+          <p style={{
+            fontSize: 16, fontWeight: 500, color: 'var(--color-cyan)',
+            marginBottom: 10, letterSpacing: '0.04em',
+          }}>
+            釣果データで、海を見る。
+          </p>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', maxWidth: 460, lineHeight: 1.7 }}>
+            関東圏の複数船宿から釣果データを毎日自動収集。エリアを選んで最新の釣果情報を確認できます。
           </p>
         </div>
       </section>
