@@ -43,3 +43,4 @@ backend/logs/
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+supabase/.temp/
