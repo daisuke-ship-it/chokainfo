@@ -26,27 +26,22 @@ const FISH_DASHBOARD_AREAS: AreaName[] = ['東京湾', '相模湾']
 // ── 型定義 ────────────────────────────────────────────────────
 type RawCatchDetail = {
   id: number
-  species_name: string | null
+  species_name_raw: string | null
   count: number | null
   unit: string | null
   size_text: string | null
+  fish_species: { name: string } | null
 }
 
 type RawCatch = {
   id: number
   created_at: string
   sail_date: string | null
-  boat_name: string | null
-  count_min: number | null
-  count_max: number | null
-  size_min_cm: number | null
-  size_max_cm: number | null
+  boat_name_raw: string | null
   source_url: string | null
   condition_text: string | null
   shipyards: { name: string; areas: { name: string } | null; ports: { name: string } | null } | null
-  fish_species: { name: string } | null
-  fishing_methods: { name: string; method_group: string | null } | null
-  catch_details: RawCatchDetail[]
+  catches_v2: RawCatchDetail[]
 }
 
 // ── データ取得 ─────────────────────────────────────────────────
@@ -61,17 +56,13 @@ async function getFishSpeciesId(fishName: string): Promise<number | null> {
 
 async function getCatchDataForFish(fishSpeciesId: number): Promise<CatchRecord[]> {
   const { data, error } = await supabase
-    .from('catches')
+    .from('fishing_trips')
     .select(`
-      id, created_at, sail_date, boat_name,
-      count_min, count_max, size_min_cm, size_max_cm,
-      source_url, condition_text,
+      id, created_at, sail_date, boat_name_raw, source_url, condition_text,
       shipyards ( name, areas ( name ), ports ( name ) ),
-      fish_species ( name ),
-      fishing_methods ( name, method_group ),
-      catch_details (*)
+      catches_v2!inner ( id, fish_species_id, species_name_raw, count, count_min, count_max, unit, size_text, detail_type, fish_species ( name ) )
     `)
-    .eq('fish_species_id', fishSpeciesId)
+    .eq('catches_v2.fish_species_id', fishSpeciesId)
     .order('sail_date', { ascending: false })
     .order('created_at', { ascending: false })
     .limit(500)
@@ -79,35 +70,41 @@ async function getCatchDataForFish(fishSpeciesId: number): Promise<CatchRecord[]
   if (error) return []
 
   const rawRows = (data ?? []) as unknown as RawCatch[]
-  const mapped: CatchRecord[] = rawRows.map((row) => ({
-    id:             row.id,
-    created_at:     row.created_at,
-    date:           row.sail_date,
-    boat_name:      row.boat_name ?? null,
-    fish_name:      row.fish_species?.name ?? null,
-    size_min_cm:    row.size_min_cm,
-    size_max_cm:    row.size_max_cm,
-    count_min:      row.count_min,
-    count_max:      row.count_max,
-    source_url:     row.source_url,
-    shipyard_name:  row.shipyards?.name ?? null,
-    shipyard_area:  row.shipyards?.areas?.name ?? null,
-    port_name:      row.shipyards?.ports?.name ?? null,
-    fishing_method: row.fishing_methods?.name ?? null,
-    method_group:   row.fishing_methods?.method_group ?? null,
-    condition_text: row.condition_text ?? null,
-    catch_details:  (row.catch_details ?? []).map((d) => ({
-      id:           d.id,
-      species_name: d.species_name ?? null,
-      count:        d.count ?? null,
-      unit:         d.unit ?? null,
-      size_text:    d.size_text ?? null,
-    })),
-  }))
+  const mapped: CatchRecord[] = rawRows.map((row) => {
+    const details = row.catches_v2 ?? []
+    const mainFish = details.find(d => d.fish_species)?.fish_species?.name ?? null
+    const counts = details.map(d => d.count).filter((v): v is number => v !== null)
+
+    return {
+      id:             row.id,
+      created_at:     row.created_at,
+      date:           row.sail_date,
+      boat_name:      row.boat_name_raw ?? null,
+      fish_name:      mainFish,
+      size_min_cm:    null,
+      size_max_cm:    null,
+      count_min:      counts.length ? Math.min(...counts) : null,
+      count_max:      counts.length ? Math.max(...counts) : null,
+      source_url:     row.source_url,
+      shipyard_name:  row.shipyards?.name ?? null,
+      shipyard_area:  row.shipyards?.areas?.name ?? null,
+      port_name:      row.shipyards?.ports?.name ?? null,
+      fishing_method: null,
+      method_group:   null,
+      condition_text: row.condition_text ?? null,
+      catch_details:  details.map((d) => ({
+        id:           d.id,
+        species_name: d.species_name_raw ?? null,
+        count:        d.count ?? null,
+        unit:         d.unit ?? null,
+        size_text:    d.size_text ?? null,
+      })),
+    }
+  })
 
   const seen = new Set<string>()
   return mapped.filter((r) => {
-    const key = [r.shipyard_name ?? '', r.date ?? '', r.count_min ?? '', r.count_max ?? ''].join('|')
+    const key = [r.shipyard_name ?? '', r.date ?? '', r.boat_name ?? ''].join('|')
     if (seen.has(key)) return false
     seen.add(key)
     return true
@@ -151,7 +148,7 @@ async function getAreas(): Promise<AreaRecord[]> {
 
 async function getLatestUpdatedAt(): Promise<string | null> {
   const { data } = await supabase
-    .from('catches')
+    .from('fishing_trips')
     .select('created_at')
     .order('created_at', { ascending: false })
     .limit(1)

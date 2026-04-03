@@ -55,28 +55,36 @@ async function fetchStats(area: string, fish: string, date: string): Promise<Sta
     if (!ids.length) return empty
 
     const from = new Date(new Date(date).getTime() - 7 * 86400_000).toISOString().slice(0, 10)
-    const { data: rows } = await supabase
-      .from('catches')
-      .select('count_min, count_max, size_min_cm, size_max_cm')
-      .eq('fish_species_id', fishRow.id)
+
+    // Step 1: 該当 trip_id を取得
+    const { data: trips } = await supabase
+      .from('fishing_trips')
+      .select('id')
       .in('shipyard_id', ids)
       .gte('sail_date', from)
       .lte('sail_date', date)
-      .order('sail_date', { ascending: false })
+
+    const tripIds = (trips ?? []).map((t: { id: number }) => t.id)
+    if (!tripIds.length) return empty
+
+    // Step 2: catches_v2 から統計取得
+    const { data: rows } = await supabase
+      .from('catches_v2')
+      .select('count, count_min, count_max, size_text')
+      .eq('fish_species_id', fishRow.id)
+      .in('trip_id', tripIds)
       .limit(50)
 
     if (!rows?.length) return empty
 
-    const counts = rows
-      .map((c: { count_max: number | null; count_min: number | null }) => c.count_max ?? c.count_min)
+    const counts = (rows ?? [])
+      .map((c: { count_max: number | null; count_min: number | null; count: number | null }) => c.count_max ?? c.count ?? c.count_min)
       .filter((v): v is number => v !== null)
-    const mins = rows.map((c: { size_min_cm: number | null }) => c.size_min_cm).filter((v): v is number => v !== null)
-    const maxs = rows.map((c: { size_max_cm: number | null }) => c.size_max_cm).filter((v): v is number => v !== null)
 
     return {
       avgCount: counts.length ? Math.round(counts.reduce((a, b) => a + b, 0) / counts.length * 10) / 10 : null,
       maxCount: counts.length ? Math.max(...counts) : null,
-      sizeRange: mins.length && maxs.length ? `${Math.min(...mins)}〜${Math.max(...maxs)}cm` : null,
+      sizeRange: null,
       recordCount: rows.length,
     }
   } catch {

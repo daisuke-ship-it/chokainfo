@@ -32,7 +32,7 @@ const AREA_SLUGS: Record<string, string> = {
 type RawRow = {
   sail_date: string | null
   shipyards: { name: string; areas: { name: string } | null } | null
-  catch_details: { species_name: string | null; count: number | null }[]
+  catches_v2: { species_name_raw: string | null; count: number | null }[]
 }
 
 type DailyEntry = {
@@ -76,8 +76,8 @@ async function fetchRows(): Promise<RawRow[]> {
   const cutoffStr = cutoff.toISOString().slice(0, 10)
 
   const { data } = await supabase
-    .from('catches')
-    .select('sail_date, shipyards ( name, areas ( name ) ), catch_details ( species_name, count )')
+    .from('fishing_trips')
+    .select('sail_date, shipyards ( name, areas ( name ) ), catches_v2 ( species_name_raw, count )')
     .gte('sail_date', cutoffStr)
     .order('sail_date', { ascending: false })
 
@@ -99,7 +99,7 @@ async function fetchEnvData(): Promise<Record<string, string>> {
 
 async function getLatestUpdatedAt(): Promise<string | null> {
   const { data } = await supabase
-    .from('catches').select('created_at')
+    .from('fishing_trips').select('created_at')
     .order('created_at', { ascending: false }).limit(1).maybeSingle()
   return data?.created_at ?? null
 }
@@ -112,9 +112,9 @@ function buildAgg(rows: RawRow[]): Map<string, DailyEntry> {
     const yard = row.shipyards?.name
     const date = row.sail_date
     if (!area || !date) continue
-    for (const d of row.catch_details) {
-      if (!d.species_name || d.count === null || d.count <= 0) continue
-      const key = `${area}|${d.species_name}|${date}`
+    for (const d of row.catches_v2) {
+      if (!d.species_name_raw || d.count === null || d.count <= 0) continue
+      const key = `${area}|${d.species_name_raw}|${date}`
       const cur = agg.get(key) ?? { sumCount: 0, nEntries: 0, shipyards: new Set<string>() }
       cur.sumCount  += d.count
       cur.nEntries  += 1
@@ -273,10 +273,10 @@ function computeTide(
     if (!date) continue
     const tideType = envMap[date]
     if (!tideType) continue
-    for (const d of row.catch_details) {
-      if (!d.species_name || d.count === null || d.count <= 0) continue
-      if (!TARGET_FISH.includes(d.species_name)) continue
-      const key = `${tideType}|${d.species_name}`
+    for (const d of row.catches_v2) {
+      if (!d.species_name_raw || d.count === null || d.count <= 0) continue
+      if (!TARGET_FISH.includes(d.species_name_raw)) continue
+      const key = `${tideType}|${d.species_name_raw}`
       const cur = map.get(key) ?? { sumCount: 0, nEntries: 0 }
       cur.sumCount += d.count
       cur.nEntries += 1
