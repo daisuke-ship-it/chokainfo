@@ -229,11 +229,11 @@ def main():
     # ── ハンドラーインポート（sys.path 調整）─────────────────────────────
     sys.path.insert(0, str(Path(__file__).parent))
     from handlers import get_handler, HANDLER_MAP
-    from utils.db import update_last_scraped_at
+    from utils.db_v2 import update_last_scraped_at
 
     # ── マスタデータ取得 ──────────────────────────────────────────────────
     try:
-        species_list = db.table("fish_species").select("id, name, aliases").execute().data or []
+        species_list = db.table("fish_species").select("id, name, aliases, growth_names").execute().data or []
         logger.info(f"fish_species: {len(species_list)} 件")
     except Exception as e:
         logger.warning(f"マスタ取得失敗（空リストで続行）: {e}")

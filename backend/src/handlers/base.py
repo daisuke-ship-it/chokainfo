@@ -7,7 +7,7 @@ from typing import Any
 import anthropic
 
 from utils.fetch import compute_md5, fetch_html, html_to_text
-from utils.db    import get_latest_html_hash, save_catch_raw, save_catches
+from utils.db_v2 import get_latest_html_hash, save_catch_raw, save_catches
 
 
 class BaseHandler(ABC):
@@ -107,7 +107,8 @@ class BaseHandler(ABC):
                 self.db, yard_id, raw, html_hash, raw_text, yard_url
             )
             saved = save_catches(
-                self.db, records, yard_id, catch_raw_id, yard_url, self.logger
+                self.db, records, yard_id, catch_raw_id, yard_url, self.logger,
+                species_list=self.species_list,
             )
             if saved > 0:
                 self.db.table("catch_raw").update(
