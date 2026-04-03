@@ -161,16 +161,33 @@ def fetch_existing_summaries(db, today: str) -> dict[tuple, dict]:
 
 
 def fetch_today_catches(db, today: str) -> list[dict]:
-    """当日の catches を JOIN して取得（catch_details も含む）"""
-    resp = (db.table("catches")
+    """
+    当日の fishing_trips + catches_v2 を取得。
+
+    戻り値の各レコードは fishing_trip 1件で、catches_v2 を子に持つ:
+    {
+        "id": trip_id,
+        "boat_name_raw": "午前船",
+        "condition_text": "...",
+        "shipyards": {"id": 4, "name": "...", "areas": {"id": 1, "name": "東京湾"}},
+        "catches_v2": [
+            {"species_name_raw": "マダイ", "count": 5, "count_max": 10,
+             "fish_species_id": 7, "fish_species": {"id": 7, "name": "マダイ"},
+             "size_text": "0.5-1.2kg", "detail_type": "catch"}
+        ]
+    }
+    """
+    resp = (db.table("fishing_trips")
               .select("""
                   id,
-                  count_min, count_max,
-                  size_min_cm, size_max_cm,
+                  boat_name_raw,
                   condition_text,
                   shipyards ( id, name, areas ( id, name ) ),
-                  fish_species ( id, name ),
-                  catch_details ( species_name, count, unit )
+                  catches_v2 (
+                      species_name_raw, count, count_min, count_max,
+                      fish_species_id, size_text, detail_type, unit,
+                      fish_species ( id, name )
+                  )
               """)
               .eq("sail_date", today)
               .execute())
@@ -199,77 +216,71 @@ def format_catch(min_val, max_val) -> str:
     return str(max_val if max_val is not None else min_val)
 
 
-def build_shipyard_input(catches: list[dict], shipyard_name: str) -> str:
+def build_shipyard_input(trips: list[dict], shipyard_name: str) -> str:
     """shipyard サマリー用の入力テキストを構築"""
     lines = [f"【{shipyard_name} 本日の釣果】"]
-    for c in catches:
-        fish_name = (c.get("fish_species") or {}).get("name", "不明")
-        catch_str = format_catch(c.get("count_min"), c.get("count_max"))
-        size_str  = format_catch(c.get("size_min_cm"), c.get("size_max_cm"))
-        line = f"・{fish_name}: {catch_str}尾"
-        if size_str != "不明":
-            line += f" / {size_str}cm"
-        if c.get("condition_text"):
-            line += f" / {c['condition_text'][:100]}"
-        lines.append(line)
+    for trip in trips:
+        boat = trip.get("boat_name_raw") or ""
+        if boat:
+            lines.append(f"〈{boat}〉")
+        for cv in (trip.get("catches_v2") or []):
+            if cv.get("detail_type") != "catch":
+                continue
+            fish_name = (cv.get("fish_species") or {}).get("name") or cv.get("species_name_raw") or "不明"
+            catch_str = format_catch(cv.get("count_min") or cv.get("count"), cv.get("count_max"))
+            line = f"・{fish_name}: {catch_str}尾"
+            size = cv.get("size_text")
+            if size:
+                line += f" / {size}"
+            lines.append(line)
+        if trip.get("condition_text"):
+            lines.append(f"  → {trip['condition_text'][:100]}")
     return "\n".join(lines)
 
 
-def build_fish_input(catches: list[dict], area_name: str, fish_name: str, target_date: str) -> str:
+def build_fish_input(trips: list[dict], area_name: str, fish_name: str, target_date: str) -> str:
     """fish_species サマリー用の入力テキストを構築"""
     y, m, d = int(target_date[:4]), int(target_date[5:7]), int(target_date[8:10])
     date_str = f"{y}年{m}月{d}日"
     lines = [f"【{area_name} / {fish_name} {date_str}の釣果】"]
-    for c in catches:
-        shipyard = (c.get("shipyards") or {}).get("name", "不明")
-        # catch_details から対象魚種の釣果・サイズを取得（新形式）
-        fish_detail = next(
-            (d for d in (c.get("catch_details") or [])
-             if fish_name in (d.get("species_name") or "")),
-            None,
-        )
-        if fish_detail:
-            max_count = fish_detail.get("count")
-            min_count = c.get("count_min")
-            catch_str = format_catch(min_count, max_count)
-        else:
-            catch_str = format_catch(c.get("count_min"), c.get("count_max"))
-        size_str = format_catch(c.get("size_min_cm"), c.get("size_max_cm"))
-        line = f"・{shipyard}: {catch_str}尾"
-        if size_str != "不明":
-            line += f" / {size_str}cm"
-        if c.get("condition_text"):
-            line += f" / {c['condition_text'][:100]}"
-        lines.append(line)
+    for trip in trips:
+        shipyard = (trip.get("shipyards") or {}).get("name", "不明")
+        # catches_v2 から対象魚種の釣果を取得
+        fish_catches = [
+            cv for cv in (trip.get("catches_v2") or [])
+            if cv.get("detail_type") == "catch" and _catch_v2_has_species(cv, fish_name)
+        ]
+        for cv in fish_catches:
+            catch_str = format_catch(cv.get("count_min") or cv.get("count"), cv.get("count_max"))
+            line = f"・{shipyard}: {catch_str}尾"
+            size = cv.get("size_text")
+            if size:
+                line += f" / {size}"
+            if trip.get("condition_text"):
+                line += f" / {trip['condition_text'][:100]}"
+            lines.append(line)
     return "\n".join(lines)
 
 
-def build_area_input(catches: list[dict], area_name: str,
+def build_area_input(trips: list[dict], area_name: str,
                      fish_species_list: list[dict]) -> str:
     """area サマリー用の入力テキストを構築"""
     fish_stats: dict[str, dict] = {}
-    for c in catches:
-        shipyard = (c.get("shipyards") or {}).get("name")
-        # 魚種名を取得: fish_species JOIN（旧形式）→ catch_details（新形式）の順で確認
-        joined_name = (c.get("fish_species") or {}).get("name")
-        species_names: list[str] = []
-        if joined_name:
-            species_names.append(joined_name)
-        else:
-            for d in (c.get("catch_details") or []):
-                sn = d.get("species_name")
-                if sn and sn not in species_names:
-                    species_names.append(sn)
-
-        for fn in species_names:
+    for trip in trips:
+        shipyard = (trip.get("shipyards") or {}).get("name")
+        for cv in (trip.get("catches_v2") or []):
+            if cv.get("detail_type") != "catch":
+                continue
+            fn = (cv.get("fish_species") or {}).get("name") or cv.get("species_name_raw")
+            if not fn:
+                continue
             if fn not in fish_stats:
                 fish_stats[fn] = {"counts": [], "shipyards": set()}
             if shipyard:
                 fish_stats[fn]["shipyards"].add(shipyard)
-            if c.get("count_max") is not None:
-                fish_stats[fn]["counts"].append(c["count_max"])
-            elif c.get("count_min") is not None:
-                fish_stats[fn]["counts"].append(c["count_min"])
+            count_val = cv.get("count_max") or cv.get("count")
+            if count_val is not None:
+                fish_stats[fn]["counts"].append(count_val)
 
     if not fish_stats:
         return f"【{area_name} 本日の釣果データなし】"
@@ -287,20 +298,21 @@ def build_area_input(catches: list[dict], area_name: str,
 # 魚種マッチング
 # ──────────────────────────────────────────────────────────────────────────────
 
-def _catch_has_species(catch: dict, fish_name: str) -> bool:
-    """
-    catch レコードが指定魚種を含むか判定する。
-    fish_species JOIN（fish_species_id が NULL の新形式レコード対応）と
-    catch_details.species_name テキストの両方を確認する。
-    """
-    # 旧形式: fish_species_id がある場合
-    joined = (catch.get("fish_species") or {}).get("name")
-    if joined and fish_name in joined:
+def _catch_v2_has_species(cv: dict, fish_name: str) -> bool:
+    """catches_v2 の1レコードが指定魚種かどうか判定"""
+    joined = (cv.get("fish_species") or {}).get("name")
+    if joined and (fish_name in joined or joined in fish_name):
         return True
-    # 新形式: catch_details.species_name で判定
-    for d in (catch.get("catch_details") or []):
-        sn = d.get("species_name") or ""
-        if sn and (fish_name in sn or sn in fish_name):
+    sn = cv.get("species_name_raw") or ""
+    if sn and (fish_name in sn or sn in fish_name):
+        return True
+    return False
+
+
+def _trip_has_species(trip: dict, fish_name: str) -> bool:
+    """fishing_trip が指定魚種の catches_v2 を含むか判定"""
+    for cv in (trip.get("catches_v2") or []):
+        if cv.get("detail_type") == "catch" and _catch_v2_has_species(cv, fish_name):
             return True
     return False
 
@@ -309,9 +321,9 @@ def _catch_has_species(catch: dict, fish_name: str) -> bool:
 # 船宿サマリー スキップ判定
 # ──────────────────────────────────────────────────────────────────────────────
 
-def get_catch_count(catches: list[dict], shipyard_id: int) -> int:
-    """メモリ上の catches から該当船宿の件数を返す"""
-    return sum(1 for c in catches if (c.get("shipyards") or {}).get("id") == shipyard_id)
+def get_catch_count(trips: list[dict], shipyard_id: int) -> int:
+    """メモリ上の trips から該当船宿の件数を返す"""
+    return sum(1 for t in trips if (t.get("shipyards") or {}).get("id") == shipyard_id)
 
 
 def _should_generate(
@@ -461,25 +473,25 @@ def main():
     logger.info(f"対象日付: {today}")
 
     # ─── データ取得 ─────────────────────────────────────────────
-    catches            = fetch_today_catches(db, today)
+    trips              = fetch_today_catches(db, today)
     areas              = fetch_areas(db)
     fish_species       = fetch_fish_species(db)
     existing_summaries = fetch_existing_summaries(db, today)
-    logger.info(f"当日 catches: {len(catches)} 件 / エリア: {len(areas)} / 魚種: {len(fish_species)}")
+    logger.info(f"当日 trips: {len(trips)} 件 / エリア: {len(areas)} / 魚種: {len(fish_species)}")
     logger.info(f"既存サマリー: {len(existing_summaries)} 件")
 
-    if not catches:
+    if not trips:
         logger.info("当日の釣果データなし → サマリー生成をスキップ")
         return
 
-    # ─── 船宿別にcatchesをグループ化 ────────────────────────────
-    shipyard_catches: dict[int, list[dict]] = defaultdict(list)
-    shipyard_names:   dict[int, str]        = {}
-    for c in catches:
-        sy = c.get("shipyards") or {}
+    # ─── 船宿別に trips をグループ化 ─────────────────────────────
+    shipyard_trips:  dict[int, list[dict]] = defaultdict(list)
+    shipyard_names:  dict[int, str]        = {}
+    for trip in trips:
+        sy = trip.get("shipyards") or {}
         sy_id = sy.get("id")
         if sy_id:
-            shipyard_catches[sy_id].append(c)
+            shipyard_trips[sy_id].append(trip)
             shipyard_names[sy_id] = sy.get("name", f"ID:{sy_id}")
 
     # ─── dry-run スキャン（API呼び出し前に件数を確認） ──────────
@@ -489,8 +501,8 @@ def main():
     area_plan:        list[tuple[int, str, int]] = []  # (area_id, area_name, area_count)
 
     if run_shipyard:
-        for sy_id, sy_catches in shipyard_catches.items():
-            current_count = len(sy_catches)
+        for sy_id, sy_trips in shipyard_trips.items():
+            current_count = len(sy_trips)
             should_gen, reason = should_generate_shipyard_summary(sy_id, current_count, existing_summaries)
             status = "→ 生成" if should_gen else "→ スキップ"
             logger.info(f"  船宿[{shipyard_names[sy_id]}] {status} ({reason})")
@@ -501,7 +513,7 @@ def main():
         # ── 魚種サマリー：全エリア横断で1魚種1サマリー ──────────────
         for fish in fish_species:
             fish_id, fish_name = fish["id"], fish["name"]
-            target = [c for c in catches if _catch_has_species(c, fish_name)]
+            target = [t for t in trips if _trip_has_species(t, fish_name)]
             if not target:
                 continue
             should_gen, reason = (True, "強制再生成") if args.force else _should_generate("fish_species", fish_id, len(target), existing_summaries)
@@ -512,17 +524,16 @@ def main():
         # ── エリアサマリー ────────────────────────────────────────────
         for area in areas:
             area_id, area_name = area["id"], area["name"]
-            area_catches = [
-                c for c in catches
-                if (c.get("shipyards") or {}).get("areas", {}) and
-                   (c.get("shipyards") or {}).get("areas", {}).get("id") == area_id
+            area_trips = [
+                t for t in trips
+                if ((t.get("shipyards") or {}).get("areas") or {}).get("id") == area_id
             ]
-            if not area_catches:
+            if not area_trips:
                 continue
-            should_gen, reason = (True, "強制再生成") if args.force else _should_generate("area", area_id, len(area_catches), existing_summaries)
+            should_gen, reason = (True, "強制再生成") if args.force else _should_generate("area", area_id, len(area_trips), existing_summaries)
             logger.info(f"  エリア[{area_name}] → {'生成' if should_gen else 'スキップ'}({reason})")
             if should_gen:
-                area_plan.append((area_id, area_name, len(area_catches)))
+                area_plan.append((area_id, area_name, len(area_trips)))
 
     total_plan = len(shipyard_plan) + len(fish_plan) + len(area_plan)
     logger.info(f"\n  生成対象: 船宿={len(shipyard_plan)} / 魚種={len(fish_plan)} / エリア={len(area_plan)} / 合計={total_plan}件")
@@ -537,10 +548,10 @@ def main():
     if shipyard_plan:
         logger.info("\n▶ shipyard サマリー生成")
     for sy_id, current_count, reason in shipyard_plan:
-        sy_name    = shipyard_names[sy_id]
-        sy_catches = shipyard_catches[sy_id]
-        logger.info(f"  [{sy_name}] {len(sy_catches)} 件 ({reason})")
-        input_text = build_shipyard_input(sy_catches, sy_name)
+        sy_name   = shipyard_names[sy_id]
+        sy_trips  = shipyard_trips[sy_id]
+        logger.info(f"  [{sy_name}] {len(sy_trips)} 件 ({reason})")
+        input_text = build_shipyard_input(sy_trips, sy_name)
         try:
             summary = generate_shipyard_summary(claude_client, input_text, sy_name)
             upsert_summary(db, "shipyard", sy_id, today, summary, input_text, catches_count=current_count)
@@ -553,7 +564,7 @@ def main():
     if fish_plan:
         logger.info("\n▶ fish_species サマリー生成")
     for fish_id, fish_name, fish_count in fish_plan:
-        target = [c for c in catches if _catch_has_species(c, fish_name)]
+        target = [t for t in trips if _trip_has_species(t, fish_name)]
         logger.info(f"  [{fish_name}] {len(target)} 件（全エリア）")
         input_text = build_fish_input(target, "関東圏", fish_name, today)
         try:
@@ -573,9 +584,8 @@ def main():
         tomorrow_weather = None
     for area_id, area_name, area_count in area_plan:
         target = [
-            c for c in catches
-            if (c.get("shipyards") or {}).get("areas", {}) and
-               (c.get("shipyards") or {}).get("areas", {}).get("id") == area_id
+            t for t in trips
+            if ((t.get("shipyards") or {}).get("areas") or {}).get("id") == area_id
         ]
         logger.info(f"  [{area_name}] {len(target)} 件")
         input_text = build_area_input(target, area_name, fish_species)
