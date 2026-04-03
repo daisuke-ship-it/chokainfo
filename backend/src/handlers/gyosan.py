@@ -145,9 +145,20 @@ class GyosanHandler(BaseHandler):
         2パターンに対応:
           A) 同一行: "アジ 23-37cm 16-49匹"
           B) 複数行: 行1="トラフグ"  行2="2.0-3.5 kg　0-1 匹"
+             gyosan CMS はサイズ・数量を改行で分断することがある:
+               "55-" / "65 cm" / "5-" / "27 匹"
+             → 隣接行を結合してパースする。
+        船長コメント以降はパース対象外。
         """
         details = []
         text    = normalize_num(text)
+
+        # 船長コメント以降を除外
+        for marker in ("船長コメント", "釣り場と水深"):
+            idx = text.find(marker)
+            if idx != -1:
+                text = text[:idx]
+
         lines   = [l.strip() for l in text.splitlines()]
 
         i = 0
@@ -184,36 +195,48 @@ class GyosanHandler(BaseHandler):
                 i += 1
                 continue
 
-            # パターン B: この行が魚種名のみ → 近傍行にサイズ/数量（空行を挟む場合あり）
+            # パターン B: この行が魚種名のみ → 近傍行にサイズ/数量
             is_fish_only = re.match(r"^[^\d\s]{1,10}$", line) and not re.search(r"\d", line)
             if is_fish_only:
-                # 最大3行先まで空行をスキップして数量行を探す
-                matched = False
-                for j in range(i + 1, min(i + 5, len(lines))):
-                    next_line = lines[j]
-                    if not next_line:
-                        continue
-                    m_b = re.search(
-                        r"([\d.]+[^\d\s]*[\d.]+\s*(?:cm|kg|g))?"
-                        r"[\s　]*([\d]+[^\d]*[\d]+\s*(?:匹|本|尾|杯))",
-                        next_line
-                    )
-                    if m_b:
-                        fish      = line.strip("【】「」（）()・")
-                        size_raw  = (m_b.group(1) or "").strip()
-                        count_raw = (m_b.group(2) or "").strip()
-                        count_min, count_max = parse_count(count_raw)
-                        details.append({
-                            "species_name":     fish,
-                            "species_name_raw": fish,
-                            "count":            count_max,
-                            "unit":             self._detect_unit(count_raw),
-                            "size_text":        parse_size(size_raw) if size_raw else None,
-                        })
-                        i = j + 1
-                        matched = True
-                    break  # 空行でない最初の行で処理終了（match有無問わず）
-                if not matched:
+                # 改行分断を結合: 空行をスキップして非空行を集め、1行にまとめてパース
+                collected: list[str] = []
+                j = i + 1
+                while j < min(i + 10, len(lines)):
+                    if lines[j]:
+                        collected.append(lines[j])
+                        # 「匹|本|尾|杯」が出たら終端
+                        if re.search(r"匹|本|尾|杯", lines[j]):
+                            j += 1
+                            break
+                    j += 1
+
+                # ハイフン末尾行（"55-"）と次の行（"65 cm"）を直結
+                merged_parts: list[str] = []
+                for part in collected:
+                    if merged_parts and merged_parts[-1].endswith("-"):
+                        merged_parts[-1] = merged_parts[-1] + part
+                    else:
+                        merged_parts.append(part)
+                merged = " ".join(merged_parts)
+                m_b = re.search(
+                    r"([\d.]+[^\d\s]*[\d.]+\s*(?:cm|kg|g))?"
+                    r"[\s　]*([\d]+[^\d]*[\d]+\s*(?:匹|本|尾|杯))",
+                    merged
+                )
+                if m_b:
+                    fish      = line.strip("【】「」（）()・")
+                    size_raw  = (m_b.group(1) or "").strip()
+                    count_raw = (m_b.group(2) or "").strip()
+                    count_min, count_max = parse_count(count_raw)
+                    details.append({
+                        "species_name":     fish,
+                        "species_name_raw": fish,
+                        "count":            count_max,
+                        "unit":             self._detect_unit(count_raw),
+                        "size_text":        parse_size(size_raw) if size_raw else None,
+                    })
+                    i = j
+                else:
                     i += 1
                 continue
 
