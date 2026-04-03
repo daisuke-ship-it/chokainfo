@@ -191,7 +191,7 @@ export default function NewShipyardPage() {
               padding: '6px',
               borderRadius: '8px',
               fontSize: '12px',
-              background: step === i + 1 ? 'var(--accent)' : step > i + 1 ? 'rgba(0,212,200,0.20)' : 'rgba(255,255,255,0.05)',
+              background: step === i + 1 ? 'var(--accent)' : step > i + 1 ? 'rgba(56,189,248,0.20)' : 'rgba(255,255,255,0.05)',
               color: step === i + 1 ? '#050A18' : step > i + 1 ? 'var(--accent)' : 'var(--text-muted)',
               fontWeight: step === i + 1 ? 600 : 400,
             }}
@@ -226,7 +226,7 @@ export default function NewShipyardPage() {
               onClick={handleDetect}
               disabled={detecting || !url}
               style={{
-                background: detecting || !url ? 'rgba(0,212,200,0.4)' : 'var(--accent)',
+                background: detecting || !url ? 'rgba(56,189,248,0.4)' : 'var(--accent)',
                 color: '#050A18',
                 border: 'none',
                 borderRadius: '8px',
@@ -286,7 +286,7 @@ export default function NewShipyardPage() {
             disabled={testing}
             style={{
               marginTop: '12px',
-              background: testing ? 'rgba(0,212,200,0.4)' : 'var(--accent)',
+              background: testing ? 'rgba(56,189,248,0.4)' : 'var(--accent)',
               color: '#050A18',
               border: 'none',
               borderRadius: '8px',
@@ -429,7 +429,7 @@ export default function NewShipyardPage() {
             onClick={handleSave}
             disabled={saving}
             style={{
-              background: saving ? 'rgba(0,212,200,0.4)' : 'var(--accent)',
+              background: saving ? 'rgba(56,189,248,0.4)' : 'var(--accent)',
               color: '#050A18',
               border: 'none',
               borderRadius: '8px',

@@ -284,7 +284,7 @@ export default async function FishAreaPage({ params }: { params: PageParams }) {
                     padding: '6px 16px', borderRadius: 'var(--radius-pill)',
                     fontSize: 13, fontWeight: isActive ? 700 : 400,
                     border: isActive ? '1.5px solid var(--accent)' : '1px solid rgba(255,255,255,0.15)',
-                    background: isActive ? 'rgba(0,245,255,0.12)' : 'rgba(255,255,255,0.04)',
+                    background: isActive ? 'rgba(56,189,248,0.12)' : 'rgba(255,255,255,0.04)',
                     color: isActive ? 'var(--accent)' : 'rgba(255,255,255,0.6)',
                     whiteSpace: 'nowrap', transition: 'all 0.15s',
                   }}>
@@ -302,7 +302,7 @@ export default async function FishAreaPage({ params }: { params: PageParams }) {
                     padding: '6px 16px', borderRadius: 'var(--radius-pill)',
                     fontSize: 13, fontWeight: isActive ? 700 : 400,
                     border: isActive ? '1.5px solid var(--accent)' : '1px solid rgba(255,255,255,0.15)',
-                    background: isActive ? 'rgba(0,245,255,0.12)' : 'rgba(255,255,255,0.04)',
+                    background: isActive ? 'rgba(56,189,248,0.12)' : 'rgba(255,255,255,0.04)',
                     color: isActive ? 'var(--accent)' : 'rgba(255,255,255,0.6)',
                     whiteSpace: 'nowrap', transition: 'all 0.15s',
                   }}>
@@ -424,8 +424,8 @@ function GuideSection({
 
               {/* コツ */}
               <div style={{
-                background: 'rgba(0,245,255,0.03)',
-                border: '1px solid rgba(0,245,255,0.10)',
+                background: 'rgba(56,189,248,0.03)',
+                border: '1px solid rgba(56,189,248,0.10)',
                 borderRadius: 6,
                 padding: '7px 10px',
                 marginTop: 2,

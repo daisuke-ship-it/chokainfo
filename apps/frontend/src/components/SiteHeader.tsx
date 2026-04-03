@@ -128,14 +128,14 @@ export default function SiteHeader({ updatedAt, subtitle = '関東圏' }: Props)
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           <div style={{
             width: 32, height: 32, borderRadius: 10,
-            background: 'linear-gradient(135deg, rgba(0,212,200,0.18) 0%, rgba(0,212,200,0.08) 100%)',
-            border: '1px solid rgba(0,212,200,0.30)',
+            background: 'linear-gradient(135deg, rgba(56,189,248,0.18) 0%, rgba(56,189,248,0.08) 100%)',
+            border: '1px solid rgba(56,189,248,0.30)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
           }}>
             <svg width="18" height="18" viewBox="0 0 32 20" fill="none">
-              <path d="M4 10 L10 3 L10 17 Z" fill="#00D4C8" opacity="0.9" />
-              <ellipse cx="19" cy="10" rx="11" ry="7" fill="#00D4C8" opacity="0.85" />
+              <path d="M4 10 L10 3 L10 17 Z" fill="#38BDF8" opacity="0.9" />
+              <ellipse cx="19" cy="10" rx="11" ry="7" fill="#38BDF8" opacity="0.85" />
               <path d="M14 3 Q19 1 24 4 L22 7 Q19 5 14 7 Z" fill="white" opacity="0.4" />
               <circle cx="27" cy="9" r="1.5" fill="white" />
             </svg>
@@ -191,7 +191,7 @@ export default function SiteHeader({ updatedAt, subtitle = '関東圏' }: Props)
             <span style={{
               width: 5, height: 5, borderRadius: '50%',
               background: 'var(--color-cyan)', display: 'inline-block',
-              boxShadow: '0 0 6px rgba(0,212,200,0.70)',
+              boxShadow: '0 0 6px rgba(56,189,248,0.70)',
             }} />
             <span className="data-value">{updatedAt}</span>
           </div>

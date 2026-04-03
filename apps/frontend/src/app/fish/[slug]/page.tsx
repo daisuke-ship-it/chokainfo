@@ -216,7 +216,7 @@ export default async function FishPage({ params }: { params: PageParams }) {
       <section style={{ position: 'relative', overflow: 'hidden' }}>
         <div style={{
           position: 'absolute', inset: 0,
-          background: 'linear-gradient(135deg, rgba(0,212,200,0.06) 0%, transparent 40%, rgba(0,212,200,0.03) 100%)',
+          background: 'linear-gradient(135deg, rgba(56,189,248,0.06) 0%, transparent 40%, rgba(56,189,248,0.03) 100%)',
         }} />
         <div className="page-container" style={{ position: 'relative', padding: '32px 16px 24px' }}>
 

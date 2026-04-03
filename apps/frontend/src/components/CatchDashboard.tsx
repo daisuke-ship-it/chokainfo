@@ -189,10 +189,10 @@ function FilterPill({
         fontSize: 12,
         fontWeight: active ? 600 : 400,
         cursor: disabled ? 'not-allowed' : 'pointer',
-        border: active ? '1px solid #00d4c8' : '1px solid rgba(255,255,255,0.15)',
-        background: disabled ? 'var(--surface-2)' : active ? 'rgba(0,212,200,0.10)' : 'rgba(255,255,255,0.04)',
-        color: disabled ? 'var(--text-muted)' : active ? '#00d4c8' : 'var(--text-sub)',
-        boxShadow: active ? '0 0 12px rgba(0,212,200,0.30), inset 0 0 8px rgba(0,212,200,0.05)' : 'none',
+        border: active ? '1px solid #38BDF8' : '1px solid rgba(255,255,255,0.15)',
+        background: disabled ? 'var(--surface-2)' : active ? 'rgba(56,189,248,0.10)' : 'rgba(255,255,255,0.04)',
+        color: disabled ? 'var(--text-muted)' : active ? '#38BDF8' : 'var(--text-sub)',
+        boxShadow: active ? '0 0 12px rgba(56,189,248,0.30), inset 0 0 8px rgba(56,189,248,0.05)' : 'none',
         transition: 'all 0.15s',
         whiteSpace: 'nowrap' as const,
         opacity: disabled ? 0.5 : 1,
@@ -217,10 +217,10 @@ function AISummaryCard({ variant, label, text }: {
   variant: 'area' | 'fish'; label: string; text: string
 }) {
   const isArea    = variant === 'area'
-  const bg        = 'rgba(0,245,255,0.06)'
+  const bg        = 'rgba(56,189,248,0.06)'
   const leftColor = 'var(--accent)'
-  const sideColor = 'rgba(0,245,255,0.22)'
-  const textColor = isArea ? '#7ee8e4' : '#a0efec'
+  const sideColor = 'rgba(56,189,248,0.22)'
+  const textColor = isArea ? '#7DD3FC' : '#93DBFD'
 
   return (
     <div style={{
@@ -356,10 +356,10 @@ function SummaryCard({ records, envData, period, sizeUnit = 'cm', fishAliases = 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '18px 8px' }}>
         {stats.map(({ Icon, label, value, highlight }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Icon size={24} strokeWidth={1.5} style={{ color: '#00d4c8', flexShrink: 0 }} />
+            <Icon size={24} strokeWidth={1.5} style={{ color: '#38BDF8', flexShrink: 0 }} />
             <div>
               <p style={{ fontSize: 10, color: '#8899bb', marginBottom: 3, letterSpacing: '0.05em', fontFamily: "'Inter', system-ui, sans-serif", fontWeight: 400 }}>{label}</p>
-              <p style={{ fontSize: 22, fontWeight: 700, color: highlight ? '#00d4c8' : '#f0f4ff', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+              <p style={{ fontSize: 22, fontWeight: 700, color: highlight ? '#38BDF8' : '#f0f4ff', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
                 {value}
               </p>
             </div>
@@ -435,7 +435,7 @@ export default function CatchDashboard({
       <div style={{
         background: 'rgba(255,255,255,0.05)',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        border: '1px solid rgba(0,212,200,0.35)',
+        border: '1px solid rgba(56,189,248,0.35)',
         borderRadius: 16, padding: '14px 16px',
         display: 'flex', flexDirection: 'column', gap: 12,
       }}>
@@ -461,7 +461,7 @@ export default function CatchDashboard({
       <div style={{
         background: 'rgba(255,255,255,0.05)',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        border: '1px solid rgba(0,212,200,0.35)',
+        border: '1px solid rgba(56,189,248,0.35)',
         borderRadius: 16, padding: '14px 16px',
         display: 'flex', flexDirection: 'column', gap: 10,
       }}>
@@ -526,7 +526,7 @@ export default function CatchDashboard({
       <div style={{
         background: 'rgba(255,255,255,0.05)',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        border: '1px solid rgba(0,212,200,0.35)',
+        border: '1px solid rgba(56,189,248,0.35)',
         borderRadius: 16, overflow: 'hidden',
       }}>
         {/* タブヘッダー */}

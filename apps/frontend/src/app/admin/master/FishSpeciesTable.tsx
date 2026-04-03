@@ -367,7 +367,7 @@ export default function FishSpeciesTable() {
                           disabled={row._saving || !row.name.trim()}
                           onClick={() => saveRow(i)}
                           style={{
-                            background: row._saving || !row.name.trim() ? 'rgba(0,212,200,0.3)' : '#00d4c8',
+                            background: row._saving || !row.name.trim() ? 'rgba(56,189,248,0.3)' : '#38BDF8',
                             color: '#050A18',
                             border: 'none',
                             borderRadius: '6px',

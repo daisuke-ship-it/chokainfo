@@ -314,7 +314,7 @@ const LEVEL_STYLE: Record<number, { bg: string; color: string; border: string }>
 }
 
 const RANK_BADGE: Record<number, { bg: string; border: string; color: string }> = {
-  1: { bg: 'rgba(0,212,200,0.15)',   border: 'rgba(0,212,200,0.5)', color: '#00d4c8' },
+  1: { bg: 'rgba(56,189,248,0.15)',   border: 'rgba(56,189,248,0.5)', color: '#38BDF8' },
   2: { bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.2)', color: '#8899bb' },
   3: { bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.12)', color: '#4a5a7a' },
 }

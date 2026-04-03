@@ -107,7 +107,7 @@ function TrendChart({ data }: { data: TrendPoint[] }) {
 
 // ── 潮汐×釣果 棒グラフ（横軸：魚種、バー：潮汐種別）──────────
 const TIDE_COLORS: Record<string, string> = {
-  '大潮': '#00d4c8',
+  '大潮': '#38BDF8',
   '中潮': '#60a5fa',
   '小潮': '#94a3b8',
   '長潮': '#64748b',

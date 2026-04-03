@@ -33,7 +33,7 @@ type ChartPoint = {
 
 // ── 潮汐設定 ────────────────────────────────────────────────
 const TIDE_CONFIG: Record<string, { symbol: string; color: string }> = {
-  '大潮': { symbol: '🌕', color: '#00F5FF' },
+  '大潮': { symbol: '🌕', color: '#7DD3FC' },
   '中潮': { symbol: '🌔', color: '#7c3aed' },
   '小潮': { symbol: '🌒', color: '#6b7280' },
   '長潮': { symbol: '〜',  color: '#4b5563' },
@@ -182,8 +182,8 @@ export default function CatchChart({ records, fishAliases, envData, period }: Pr
       <ComposedChart data={data} margin={{ top: 4, right: 24, left: -22, bottom: 20 }}>
         <defs>
           <linearGradient id="rangeGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor="#00F5FF" stopOpacity={0.22} />
-            <stop offset="100%" stopColor="#00F5FF" stopOpacity={0.05} />
+            <stop offset="0%"   stopColor="#7DD3FC" stopOpacity={0.22} />
+            <stop offset="100%" stopColor="#7DD3FC" stopOpacity={0.05} />
           </linearGradient>
         </defs>
 
@@ -233,10 +233,10 @@ export default function CatchChart({ records, fishAliases, envData, period }: Pr
         <Line
           type="monotone"
           dataKey="avg"
-          stroke="#00F5FF"
+          stroke="#7DD3FC"
           strokeWidth={2}
           dot={false}
-          activeDot={{ r: 4, fill: '#00F5FF', stroke: 'white', strokeWidth: 2 }}
+          activeDot={{ r: 4, fill: '#7DD3FC', stroke: 'white', strokeWidth: 2 }}
           connectNulls={false}
         />
       </ComposedChart>

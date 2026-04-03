@@ -316,11 +316,11 @@ export default async function Home() {
       <section style={{ position: 'relative', overflow: 'hidden', minHeight: 220 }}>
         <div style={{
           position: 'absolute', inset: 0,
-          background: 'linear-gradient(160deg, rgba(0,212,200,0.08) 0%, rgba(4,8,16,0.9) 40%, rgba(0,212,200,0.04) 100%)',
+          background: 'linear-gradient(160deg, rgba(56,189,248,0.08) 0%, rgba(4,8,16,0.9) 40%, rgba(56,189,248,0.04) 100%)',
         }} />
         <div style={{
           position: 'absolute', inset: 0, opacity: 0.12,
-          background: 'radial-gradient(ellipse 80% 60% at 70% 20%, rgba(0,212,200,0.3) 0%, transparent 70%)',
+          background: 'radial-gradient(ellipse 80% 60% at 70% 20%, rgba(56,189,248,0.3) 0%, transparent 70%)',
         }} />
         <div className="page-container" style={{ position: 'relative', padding: '48px 16px 44px' }}>
           <p style={{
@@ -494,7 +494,7 @@ function AreaCard({ stat }: { stat: AreaStat }) {
               fontSize: 11, fontWeight: 600, padding: '3px 10px',
               borderRadius: 'var(--radius-pill)',
               background: 'var(--color-cyan-dim)', color: 'var(--color-cyan)',
-              border: '1px solid rgba(0,212,200,0.25)',
+              border: '1px solid rgba(56,189,248,0.25)',
               whiteSpace: 'nowrap', flexShrink: 0,
             }}>
               {weekRecords}件
@@ -547,8 +547,8 @@ function AreaCard({ stat }: { stat: AreaStat }) {
             {/* AI Summary */}
             {aiSummary && (
               <div style={{
-                background: 'rgba(0,212,200,0.04)',
-                border: '1px solid rgba(0,212,200,0.12)',
+                background: 'rgba(56,189,248,0.04)',
+                border: '1px solid rgba(56,189,248,0.12)',
                 borderRadius: 10,
                 padding: '10px 12px',
                 marginBottom: 12,

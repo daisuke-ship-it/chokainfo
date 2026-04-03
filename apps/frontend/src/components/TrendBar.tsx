@@ -124,8 +124,8 @@ export default function TrendBar({ records, activeFish, onFishClick }: Props) {
             style={{
               padding: '10px 8px',
               borderRadius: 'var(--radius-md)',
-              border: isActive ? '1.5px solid rgba(0,245,255,0.60)' : '0.5px solid rgba(180,210,255,0.12)',
-              background: isActive ? 'rgba(0,245,255,0.10)' : 'rgba(8,18,55,0.28)',
+              border: isActive ? '1.5px solid rgba(56,189,248,0.60)' : '0.5px solid rgba(180,210,255,0.12)',
+              background: isActive ? 'rgba(56,189,248,0.10)' : 'rgba(8,18,55,0.28)',
               cursor: 'pointer',
               textAlign: 'left',
               transition: 'all 0.15s',
@@ -135,7 +135,7 @@ export default function TrendBar({ records, activeFish, onFishClick }: Props) {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: isActive ? '#00F5FF' : 'var(--text-main)', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: isActive ? '#7DD3FC' : 'var(--text-main)', whiteSpace: 'nowrap' }}>
                 {fish}
               </span>
               <span style={{ fontSize: 16, color: trend.color, lineHeight: 1, marginLeft: 4 }}>
@@ -151,7 +151,7 @@ export default function TrendBar({ records, activeFish, onFishClick }: Props) {
             <Link
               href={`/fish/${FISH_SLUGS[fish]}`}
               onClick={(e) => e.stopPropagation()}
-              style={{ fontSize: 10, color: 'rgba(0,245,255,0.75)', marginTop: 4, textAlign: 'right' }}
+              style={{ fontSize: 10, color: 'rgba(56,189,248,0.75)', marginTop: 4, textAlign: 'right' }}
             >
               詳細を見る →
             </Link>

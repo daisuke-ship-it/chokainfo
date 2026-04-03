@@ -3,13 +3,13 @@
 import { CatchRecord, CatchDetail } from '@/lib/supabase'
 
 /* ── Badge definitions ─────────────────────────────────────── */
-const AREA_STYLE   = { bg: 'rgba(0,245,255,0.10)',  color: 'rgba(160,200,255,0.90)' }
-const FISH_STYLE   = { bg: 'rgba(0,245,255,0.08)',  color: 'rgba(140,185,255,0.80)' }
+const AREA_STYLE   = { bg: 'rgba(56,189,248,0.10)',  color: 'rgba(160,200,255,0.90)' }
+const FISH_STYLE   = { bg: 'rgba(56,189,248,0.08)',  color: 'rgba(140,185,255,0.80)' }
 
 const METHOD_STYLE: Record<string, { bg: string; color: string }> = {
   'テンヤ':   { bg: 'rgba(74,222,128,0.08)',  color: '#4ade80' },
-  'ルアー':   { bg: 'rgba(0,245,255,0.10)',  color: '#00F5FF' },
-  'ジギング': { bg: 'rgba(0,245,255,0.10)',  color: '#00F5FF' },
+  'ルアー':   { bg: 'rgba(56,189,248,0.10)',  color: '#7DD3FC' },
+  'ジギング': { bg: 'rgba(56,189,248,0.10)',  color: '#7DD3FC' },
   '餌':       { bg: 'rgba(251,146,60,0.08)',  color: '#fb923c' },
   'エサ':     { bg: 'rgba(251,146,60,0.08)',  color: '#fb923c' },
   'テンビン': { bg: 'rgba(251,146,60,0.08)',  color: '#fb923c' },
@@ -154,7 +154,7 @@ export default function CatchCards({ records }: Props) {
                       <span style={{ fontSize: 12, color: 'var(--text-muted)', minWidth: 56, flexShrink: 0, letterSpacing: '0.02em' }}>
                         {name}
                       </span>
-                      <span style={{ fontSize: 16, fontWeight: 700, color: '#00F5FF', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.01em' }}>
+                      <span style={{ fontSize: 16, fontWeight: 700, color: '#7DD3FC', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.01em' }}>
                         {lo === max ? `${max}` : `${lo}〜${max}`}
                       </span>
                       {size_text && (
@@ -171,7 +171,7 @@ export default function CatchCards({ records }: Props) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                   <span style={{ fontSize: 11, color: 'var(--text-muted)', minWidth: 44, letterSpacing: '0.02em' }}>釣果</span>
-                  <span style={{ fontSize: 17, fontWeight: 700, color: '#00F5FF', fontVariantNumeric: 'tabular-nums' }}>
+                  <span style={{ fontSize: 17, fontWeight: 700, color: '#7DD3FC', fontVariantNumeric: 'tabular-nums' }}>
                     {formatCatch(r.count_min, r.count_max)}
                   </span>
                 </div>
@@ -188,12 +188,12 @@ export default function CatchCards({ records }: Props) {
             {condText && (
               <div style={{
                 marginTop: 16,
-                background: 'rgba(0,245,255,0.05)',
-                border: '1px solid rgba(0,245,255,0.15)',
+                background: 'rgba(56,189,248,0.05)',
+                border: '1px solid rgba(56,189,248,0.15)',
                 borderRadius: 'var(--radius-md)',
                 padding: '10px 12px',
               }}>
-                <p style={{ fontSize: 10, color: 'rgba(0,245,255,0.55)', marginBottom: 5, letterSpacing: '0.06em' }}>💬 船長コメント</p>
+                <p style={{ fontSize: 10, color: 'rgba(56,189,248,0.55)', marginBottom: 5, letterSpacing: '0.06em' }}>💬 船長コメント</p>
                 <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.65 }}>
                   {condText}
                 </p>
@@ -203,7 +203,7 @@ export default function CatchCards({ records }: Props) {
             {/* 記事リンク */}
             {r.source_url && (
               <a href={r.source_url} target="_blank" rel="noopener noreferrer"
-                style={{ display: 'block', textAlign: 'right', fontSize: 11, color: 'rgba(0,245,255,0.75)', marginTop: 14, letterSpacing: '0.03em' }}>
+                style={{ display: 'block', textAlign: 'right', fontSize: 11, color: 'rgba(56,189,248,0.75)', marginTop: 14, letterSpacing: '0.03em' }}>
                 記事を見る ↗
               </a>
             )}

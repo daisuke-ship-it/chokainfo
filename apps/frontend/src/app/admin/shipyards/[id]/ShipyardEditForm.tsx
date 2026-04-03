@@ -282,7 +282,7 @@ export default function ShipyardEditForm({
           onClick={handleSave}
           disabled={saving}
           style={{
-            background: saving ? 'rgba(0,212,200,0.4)' : 'var(--accent)',
+            background: saving ? 'rgba(56,189,248,0.4)' : 'var(--accent)',
             color: '#050A18',
             border: 'none',
             borderRadius: '8px',

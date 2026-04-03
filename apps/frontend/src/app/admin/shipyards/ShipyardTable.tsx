@@ -108,10 +108,10 @@ export default function ShipyardTable({ shipyards }: { shipyards: Shipyard[] }) 
             key={a}
             onClick={() => setAreaFilter(a)}
             style={{
-              background: areaFilter === a ? 'rgba(0,212,200,0.15)' : 'rgba(255,255,255,0.05)',
-              color: areaFilter === a ? '#00d4c8' : 'var(--text-muted)',
+              background: areaFilter === a ? 'rgba(56,189,248,0.15)' : 'rgba(255,255,255,0.05)',
+              color: areaFilter === a ? '#38BDF8' : 'var(--text-muted)',
               border: '1px solid',
-              borderColor: areaFilter === a ? 'rgba(0,212,200,0.5)' : 'var(--border-strong)',
+              borderColor: areaFilter === a ? 'rgba(56,189,248,0.5)' : 'var(--border-strong)',
               borderRadius: '100px',
               padding: '4px 12px',
               fontSize: '12px',

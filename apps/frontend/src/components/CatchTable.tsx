@@ -13,7 +13,7 @@ type Props = {
 
 // 釣り方グループ別 行背景色
 const GROUP_ROW_BG: Record<string, string> = {
-  'ルアー': 'rgba(0,245,255,0.05)',
+  'ルアー': 'rgba(56,189,248,0.05)',
   'テンヤ': 'rgba(74,222,128,0.04)',
   'エサ':   'rgba(251,146,60,0.04)',
 }
@@ -21,7 +21,7 @@ const GROUP_ROW_BG_DEFAULT = 'transparent'
 
 // 釣り方グループ別 左ボーダー色
 const GROUP_BORDER: Record<string, string> = {
-  'ルアー': '#00F5FF',
+  'ルアー': '#7DD3FC',
   'テンヤ': '#22c55e',
   'エサ':   '#f97316',
 }
@@ -161,7 +161,7 @@ export default function CatchTable({ records, sortField, onSort, sizeUnit = 'cm'
                   borderLeft: borderColor ? `2px solid ${borderColor}` : '2px solid transparent',
                   transition: 'background 0.1s',
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,245,255,0.08)')}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(56,189,248,0.08)')}
                 onMouseLeave={(e) => (e.currentTarget.style.background = rowBg)}
               >
                 {/* 船宿（便名・釣り方サブテキスト付き） */}

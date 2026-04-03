@@ -107,7 +107,7 @@ export default function AdminLoginPage() {
             disabled={loading}
             style={{
               width: '100%',
-              background: loading ? 'rgba(0,212,200,0.4)' : 'var(--accent)',
+              background: loading ? 'rgba(56,189,248,0.4)' : 'var(--accent)',
               color: '#050A18',
               border: 'none',
               borderRadius: '8px',
