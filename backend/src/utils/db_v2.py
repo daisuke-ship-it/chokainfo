@@ -167,7 +167,7 @@ def save_catches(
                     db.table("trip_signals").insert(signal_rows).execute()
                     logger.info(
                         f"    signals: {len(signal_rows)}件 "
-                        + ", ".join(s["signal_type"] for s in signals)
+                        + ", ".join(s["type"] for s in signals)
                     )
 
             saved += 1
