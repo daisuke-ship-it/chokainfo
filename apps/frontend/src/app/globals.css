@@ -1,83 +1,75 @@
 /* ① Shippori Mincho B1（格調ある和文serif）+ Noto Sans JP（本文）*/
-@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;600;800&family=Noto+Sans+JP:wght@400;500&family=Noto+Serif+JP:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;600;800&family=Noto+Sans+JP:wght@400;500;600&family=Noto+Serif+JP:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
 /* ─── Design Tokens ─────────────────────────────────────────── */
 :root {
+  /* --- Core Palette --- */
+  --color-cyan:        #00D4C8;
+  --color-cyan-bright: #00F5FF;
+  --color-cyan-dim:    rgba(0, 212, 200, 0.12);
+  --color-cyan-glow:   rgba(0, 212, 200, 0.25);
+
   /* --- Backgrounds & Depths --- */
-  --bg-deep-sea:      #050A18;
-  --bg-gradient-top:  #0A1A32;
-  --bg-card-glass:    rgba(255, 255, 255, 0.03);
+  --bg-deep:     #040810;
+  --bg-mid:      #0A1428;
+  --bg-surface:  rgba(12, 24, 48, 0.50);
+  --bg-card:     rgba(255, 255, 255, 0.03);
+  --bg-card-hover: rgba(255, 255, 255, 0.06);
 
-  /* --- Accents & Highlights --- */
-  --color-neon-turquoise: #00F5FF;
-  --color-text-primary:   #FFFFFF;
-  --color-text-secondary: #96AAB4;
+  /* --- Text Hierarchy --- */
+  --text-primary:   #EDF2F7;
+  --text-secondary: #8FA3B0;
+  --text-muted:     rgba(143, 163, 176, 0.55);
+  --text-dim:       rgba(143, 163, 176, 0.30);
 
-  /* --- Radii & Blur --- */
-  --border-radius-card: 24px;
-  --border-radius-tag:  100px;
-  --glass-blur:         blur(20px);
+  /* --- Borders --- */
+  --border-subtle:  rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.10);
+  --border-accent:  rgba(0, 212, 200, 0.35);
 
-  /* ── Legacy aliases ────── */
-  --primary:        #050A18;
-  --accent:         #00F5FF;
-  --accent-light:   rgba(0, 245, 255, 0.10);
-  --accent-mid:     rgba(0, 245, 255, 0.22);
-  --accent-dim:     rgba(0, 245, 255, 0.15);
-  --gold:           #00F5FF;
+  /* --- Radii --- */
+  --radius-sm:   10px;
+  --radius-md:   14px;
+  --radius-lg:   20px;
+  --radius-xl:   28px;
+  --radius-pill: 100px;
 
-  /* Crystal / Silver */
-  --crystal-silver:   rgba(200, 230, 240, 0.65);
-  --crystal-platinum: rgba(220, 240, 245, 0.90);
+  /* --- Shadows --- */
+  --shadow-card:  0 4px 24px rgba(0, 0, 0, 0.40),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-hover: 0 8px 40px rgba(0, 0, 0, 0.50),
+                  0 0 24px rgba(0, 212, 200, 0.06),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  --shadow-float: 0 16px 48px rgba(0, 0, 0, 0.60),
+                  0 0 40px rgba(0, 212, 200, 0.08);
 
-  /* Backgrounds */
-  --bg:         var(--bg-deep-sea);
-  --surface:    rgba(10, 26, 50, 0.35);
-  --surface-2:  rgba(10, 26, 50, 0.55);
-  --surface-3:  rgba(10, 26, 50, 0.70);
-
-  /* Glass */
-  --glass-bg:     var(--bg-card-glass);
-  --glass-border: rgba(255, 255, 255, 0.05);
-
-  /* Text */
-  --text:           var(--color-text-primary);
-  --text-main:      var(--color-text-primary);
-  --text-primary:   var(--color-text-primary);
-  --text-sub:       rgba(200, 225, 240, 0.75);
-  --text-secondary: var(--color-text-secondary);
-  --text-muted:     rgba(150, 170, 180, 0.55);
-  --text-dim:       #3a4a5a;
-  --text-inverse:   #050A18;
-
-  /* Borders */
-  --border:        rgba(255, 255, 255, 0.05);
-  --border-strong: rgba(255, 255, 255, 0.10);
-  --border-accent: rgba(0, 245, 255, 0.45);
-
-  /* Shadows */
-  --shadow-xs: 0 1px 4px rgba(0, 0, 0, 0.60);
-  --shadow-sm: 0 2px 16px rgba(0, 0, 0, 0.65);
-  --shadow-md: 0 4px 32px rgba(0, 0, 0, 0.70),
-               0 0 0 0.5px rgba(255, 255, 255, 0.05),
-               inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.50),
-               0 0 0 0.5px rgba(255, 255, 255, 0.05),
-               inset 0 1px 0 rgba(255, 255, 255, 0.08);
-
-  /* Radii (legacy) */
-  --radius-sm:   12px;
-  --radius-md:   16px;
-  --radius-lg:   var(--border-radius-card);
-  --radius-xl:   32px;
-  --radius-pill: var(--border-radius-tag);
-
-  /* ① Typography — Shippori Mincho B1 に変更 */
+  /* --- Typography --- */
   --font-serif: "Shippori Mincho B1", "Yu Mincho", "游明朝", Georgia, serif;
   --font-body:  "Noto Sans JP", "Hiragino Kaku Gothic ProN", sans-serif;
-  --font-label: "Noto Sans JP", system-ui, sans-serif;
-  --font-data:  var(--font-mono, "DM Mono", monospace); /* 数値専用 */
+  --font-data:  var(--font-mono, "DM Mono", monospace);
+
+  /* ── Legacy aliases (downstream compat) ── */
+  --accent:         var(--color-cyan);
+  --accent-light:   var(--color-cyan-dim);
+  --bg:             var(--bg-deep);
+  --surface:        var(--bg-surface);
+  --surface-2:      rgba(12, 24, 48, 0.65);
+  --surface-3:      rgba(12, 24, 48, 0.80);
+  --glass-bg:       var(--bg-card);
+  --glass-border:   var(--border-subtle);
+  --text:           var(--text-primary);
+  --text-main:      var(--text-primary);
+  --text-sub:       var(--text-secondary);
+  --border:         var(--border-subtle);
+  --border-strong:  var(--border-default);
+  --color-neon-turquoise: var(--color-cyan-bright);
+  --color-text-primary:   var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --bg-deep-sea:    var(--bg-deep);
+  --border-radius-card: var(--radius-lg);
+  --border-radius-tag:  var(--radius-pill);
+  --font-label:     var(--font-body);
 }
 
 /* ─── Reset & Base ──────────────────────────────────────────── */
@@ -89,18 +81,18 @@ html {
   max-width: 100%;
 }
 
-/* ② 背景：深海グラデ + 微細格子テクスチャ */
 body {
-  background-color: #050A18;
+  background-color: var(--bg-deep);
   background-image:
-    linear-gradient(rgba(0, 245, 255, 0.018) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 245, 255, 0.018) 1px, transparent 1px),
-    radial-gradient(ellipse 140% 70% at 50% 0%, #0d2444 0%, #071228 45%, #050A18 80%);
-  background-size: 40px 40px, 40px 40px, 100% 100%;
+    linear-gradient(rgba(0, 212, 200, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 200, 0.015) 1px, transparent 1px),
+    radial-gradient(ellipse 140% 60% at 50% 0%, var(--bg-mid) 0%, #060E20 50%, var(--bg-deep) 85%);
+  background-size: 48px 48px, 48px 48px, 100% 100%;
   background-attachment: fixed;
   min-height: 100vh;
-  color: var(--color-text-primary);
+  color: var(--text-primary);
   font-family: var(--font-body);
+  font-size: 14px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.65;
@@ -108,123 +100,100 @@ body {
 }
 
 /* Interactive defaults */
-button { font-family: inherit; }
+button { font-family: inherit; cursor: pointer; }
 a { text-decoration: none; color: inherit; }
-a, button { transition: all 0.2s ease-out; }
+a, button { transition: all 0.18s ease-out; }
 
 /* Focus ring */
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--color-cyan);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 /* ─── Typography ─────────────────────────────────────────────── */
-/* ① Shippori Mincho B1 を見出しに適用 */
-h1, h2, h3, .premium-title {
+h1, h2, h3, .serif {
   font-family: var(--font-serif);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--color-text-primary);
+  letter-spacing: 0.05em;
+  color: var(--text-primary);
 }
 
-.data-label, .date-display {
+h1 { font-size: clamp(22px, 4.5vw, 32px); line-height: 1.3; }
+h2 { font-size: clamp(16px, 3vw, 20px); line-height: 1.35; }
+h3 { font-size: clamp(14px, 2.5vw, 16px); line-height: 1.4; }
+
+.data-label {
   font-family: var(--font-body);
-  font-weight: 400;
-  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-/* 数値・データ専用（釣果数・サイズ） */
 .data-value {
   font-family: var(--font-data);
   font-variant-numeric: tabular-nums;
   font-weight: 400;
 }
 
-/* ─── ③ Glass card — グラデーションボーダー ─────────────────── */
-.glass, .glass-card {
-  /* グラデーションボーダーのため background-clip を使用 */
+/* ─── Glass Card ─────────────────────────────────────────────── */
+.glass-card {
   background:
-    linear-gradient(
-      160deg,
-      rgba(255, 255, 255, 0.07) 0%,
-      rgba(255, 255, 255, 0.02) 100%
-    ) padding-box,
-    linear-gradient(
-      135deg,
-      rgba(0, 245, 255, 0.40) 0%,
-      rgba(255, 255, 255, 0.14) 25%,
-      rgba(255, 255, 255, 0.04) 65%,
-      rgba(0, 245, 255, 0.10) 100%
-    ) border-box;
+    linear-gradient(160deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.015) 100%) padding-box,
+    linear-gradient(135deg, rgba(0,212,200,0.30) 0%, rgba(255,255,255,0.10) 30%, rgba(255,255,255,0.03) 70%, rgba(0,212,200,0.08) 100%) border-box;
   border: 1px solid transparent;
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.10),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.20);
-  border-radius: 20px;
-  padding: 24px;
-  transition: transform 0.25s ease-out, box-shadow 0.25s ease-out, background 0.25s ease-out;
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, background 0.2s ease-out;
 }
 
 .glass-card:hover {
   background:
-    linear-gradient(
-      160deg,
-      rgba(255, 255, 255, 0.10) 0%,
-      rgba(255, 255, 255, 0.04) 100%
-    ) padding-box,
-    linear-gradient(
-      135deg,
-      rgba(0, 245, 255, 0.65) 0%,
-      rgba(255, 255, 255, 0.22) 25%,
-      rgba(255, 255, 255, 0.06) 65%,
-      rgba(0, 245, 255, 0.25) 100%
-    ) border-box;
+    linear-gradient(160deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%) padding-box,
+    linear-gradient(135deg, rgba(0,212,200,0.50) 0%, rgba(255,255,255,0.16) 30%, rgba(255,255,255,0.05) 70%, rgba(0,212,200,0.18) 100%) border-box;
   border: 1px solid transparent;
-  transform: translateY(-3px);
-  box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.50),
-    0 0 32px rgba(0, 245, 255, 0.07),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
 }
 
-/* ─── Active tag / pill ──────────────────────────────────────── */
+/* ─── Glass (non-interactive variant) ────────────────────────── */
+.glass {
+  background: linear-gradient(160deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+  border: 1px solid var(--border-subtle);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+
+/* ─── Pill / Tag ─────────────────────────────────────────────── */
 .active-tag {
-  color: var(--color-neon-turquoise);
-  border: 1px solid var(--color-neon-turquoise);
-  border-radius: var(--border-radius-tag);
-  box-shadow: 0 0 10px rgba(0, 245, 255, 0.50);
+  color: var(--color-cyan);
+  border: 1px solid var(--color-cyan);
+  border-radius: var(--radius-pill);
+  box-shadow: 0 0 8px rgba(0, 212, 200, 0.40);
   font-family: var(--font-body);
   font-weight: 500;
 }
 
-/* ─── Serif heading utility ─────────────────────────────────── */
-.serif {
-  font-family: var(--font-serif);
-  letter-spacing: 0.08em;
-}
-
-/* ─── Layout util ───────────────────────────────────────────── */
+/* ─── Layout ─────────────────────────────────────────────────── */
 .page-container {
   width: 100%;
-  max-width: 1040px;
+  max-width: 1080px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 16px;
 }
 
 @media (min-width: 768px) {
-  .page-container { padding: 0 40px; }
+  .page-container { padding: 0 32px; }
 }
 
-/* ─── Date input dark theme ─────────────────────────────────── */
-input[type="date"] {
-  color-scheme: dark;
-}
-
-/* ─── Horizontal scroll (hidden scrollbar) ──────────────────── */
+/* ─── Utility ────────────────────────────────────────────────── */
 .scroll-x {
   overflow-x: auto;
   scrollbar-width: none;
@@ -232,19 +201,36 @@ input[type="date"] {
 }
 .scroll-x::-webkit-scrollbar { display: none; }
 
-/* ─── Scrollbar ─────────────────────────────────────────────── */
+/* Date input dark theme */
+input[type="date"] { color-scheme: dark; }
+
+/* Scrollbar */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(0, 245, 255, 0.20); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+::-webkit-scrollbar-thumb { background: rgba(0, 212, 200, 0.18); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-cyan); }
 
-/* ─── Bottom nav spacing (mobile only) ─────────────────────── */
+/* Bottom nav spacing (mobile only) */
 @media (max-width: 767px) {
   body { padding-bottom: 64px; }
 }
 
-/* ─── Neon glow utility ─────────────────────────────────────── */
+/* Accent glow utility */
 .accent-glow {
-  box-shadow: 0 0 10px rgba(0, 245, 255, 0.50),
-              0 0 24px rgba(0, 245, 255, 0.20);
+  box-shadow: 0 0 8px rgba(0, 212, 200, 0.40),
+              0 0 20px rgba(0, 212, 200, 0.15);
 }
+
+/* Section divider */
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+
+/* Trend colors */
+.trend-up   { color: #34D399; }
+.trend-flat { color: var(--text-secondary); }
+.trend-down { color: #F87171; }

@@ -9,11 +9,11 @@ const NAV_ITEMS = [
   { label: 'ホーム', Icon: Home,     href: '/',            match: (p: string) => p === '/' },
   { label: 'エリア', Icon: MapPin,   href: '/area/tokyo',  match: (p: string) => p.startsWith('/area') },
   { label: '魚種',   Icon: Fish,     href: '/fish/tachiuo',match: (p: string) => p.startsWith('/fish') },
-  { label: '分析',   Icon: BarChart2,href: '/analysis',    match: (p: string) => p.startsWith('/analysis') },
+  { label: '船宿',   Icon: Anchor,   href: '/yado',        match: (p: string) => p.startsWith('/yado') },
 ]
 
 const MORE_ITEMS = [
-  { label: '船宿', Icon: Anchor, href: '/yado' },
+  { label: '分析', Icon: BarChart2, href: '/analysis' },
   { label: 'お問い合わせ', Icon: Mail, href: '/contact' },
 ]
 
@@ -21,7 +21,7 @@ export default function BottomNav() {
   const pathname = usePathname()
   const [moreOpen, setMoreOpen] = useState(false)
 
-  const moreActive = pathname.startsWith('/yado') || pathname.startsWith('/contact')
+  const moreActive = pathname.startsWith('/analysis') || pathname.startsWith('/contact')
 
   return (
     <div className="md:hidden">
@@ -95,7 +95,7 @@ export default function BottomNav() {
                 display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'center',
                 gap: 3,
-                color: active ? '#00F5FF' : 'rgba(200,220,255,0.80)',
+                color: active ? '#00D4C8' : 'rgba(200,220,255,0.80)',
                 paddingTop: 2,
                 position: 'relative',
               }}
@@ -104,7 +104,7 @@ export default function BottomNav() {
                 <span style={{
                   position: 'absolute', top: -1, left: '50%', transform: 'translateX(-50%)',
                   width: 28, height: 2, borderRadius: '0 0 4px 4px',
-                  background: '#00F5FF',
+                  background: '#00D4C8',
                   boxShadow: '0 0 12px rgba(0,245,255,0.9), 0 0 24px rgba(0,245,255,0.4)',
                 }} />
               )}
@@ -126,7 +126,7 @@ export default function BottomNav() {
             gap: 3,
             background: 'none', border: 'none',
             cursor: 'pointer',
-            color: (moreActive || moreOpen) ? '#00F5FF' : 'rgba(200,220,255,0.80)',
+            color: (moreActive || moreOpen) ? '#00D4C8' : 'rgba(200,220,255,0.80)',
           }}
         >
           {moreOpen

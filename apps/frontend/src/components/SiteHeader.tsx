@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { Home, Map, Fish, TrendingUp, Anchor, ChevronDown, Circle } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 
 const AREAS = [
   { label: '東京湾', href: '/area/tokyo' },
@@ -32,10 +32,10 @@ function NavLink({ href, active, children }: { href: string; active: boolean; ch
       style={{
         fontSize: 13,
         fontWeight: active ? 600 : 400,
-        color: active ? '#00F5FF' : 'rgba(240,244,255,0.55)',
-        padding: '6px 12px',
+        color: active ? 'var(--color-cyan)' : 'var(--text-secondary)',
+        padding: '5px 10px',
         borderRadius: 'var(--radius-pill)',
-        background: active ? 'rgba(0,245,255,0.10)' : 'transparent',
+        background: active ? 'var(--color-cyan-dim)' : 'transparent',
         whiteSpace: 'nowrap',
         letterSpacing: '0.02em',
       }}
@@ -61,30 +61,30 @@ function DropdownNav({
         display: 'flex', alignItems: 'center', gap: 3,
         fontSize: 13,
         fontWeight: active ? 600 : 400,
-        color: active ? '#00F5FF' : 'rgba(240,244,255,0.55)',
-        padding: '6px 12px',
+        color: active ? 'var(--color-cyan)' : 'var(--text-secondary)',
+        padding: '5px 10px',
         borderRadius: 'var(--radius-pill)',
-        background: active ? 'rgba(0,245,255,0.10)' : 'transparent',
+        background: active ? 'var(--color-cyan-dim)' : 'transparent',
         cursor: 'default',
         whiteSpace: 'nowrap',
         letterSpacing: '0.02em',
       }}>
         {label}
-        <ChevronDown size={12} strokeWidth={1.5} style={{ opacity: 0.6 }} />
+        <ChevronDown size={11} strokeWidth={1.5} style={{ opacity: 0.5 }} />
       </div>
       {open && (
         <div style={{
           position: 'absolute',
-          top: 'calc(100% + 8px)',
+          top: 'calc(100% + 6px)',
           left: 0,
-          background: 'rgba(10, 26, 50, 0.92)',
+          background: 'rgba(8, 18, 38, 0.95)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255,255,255,0.10)',
+          border: '1px solid var(--border-default)',
           borderRadius: 'var(--radius-md)',
           overflow: 'hidden',
           minWidth: 120,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+          boxShadow: 'var(--shadow-float)',
           zIndex: 200,
         }}>
           {items.map((item) => (
@@ -94,9 +94,9 @@ function DropdownNav({
               onClick={onClose}
               style={{
                 display: 'block',
-                padding: '10px 18px',
+                padding: '9px 16px',
                 fontSize: 13,
-                color: 'rgba(240,244,255,0.8)',
+                color: 'var(--text-secondary)',
                 letterSpacing: '0.02em',
               }}
             >
@@ -116,41 +116,41 @@ export default function SiteHeader({ updatedAt, subtitle = '関東圏' }: Props)
   return (
     <header style={{
       position: 'sticky', top: 0, zIndex: 100,
-      background: 'rgba(5, 10, 24, 0.80)',
-      backdropFilter: 'blur(24px)',
-      WebkitBackdropFilter: 'blur(24px)',
-      borderBottom: '1px solid rgba(255,255,255,0.06)',
-      boxShadow: '0 4px 32px rgba(0,0,0,0.4)',
+      background: 'rgba(4, 8, 16, 0.85)',
+      backdropFilter: 'blur(24px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+      borderBottom: '1px solid var(--border-subtle)',
     }}>
-      <div className="page-container" style={{ display: 'flex', alignItems: 'center', height: 62, gap: 20 }}>
-
+      <div className="page-container" style={{
+        display: 'flex', alignItems: 'center', height: 56, gap: 16,
+      }}>
         {/* Logo */}
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           <div style={{
-            width: 36, height: 36, borderRadius: 'var(--radius-md)',
-            background: 'linear-gradient(135deg, rgba(0,245,255,0.20) 0%, rgba(0,245,255,0.10) 100%)',
-            border: '1px solid rgba(0,245,255,0.40)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            boxShadow: '0 0 16px rgba(0,245,255,0.20)',
+            width: 32, height: 32, borderRadius: 10,
+            background: 'linear-gradient(135deg, rgba(0,212,200,0.18) 0%, rgba(0,212,200,0.08) 100%)',
+            border: '1px solid rgba(0,212,200,0.30)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
           }}>
-            <svg width="20" height="20" viewBox="0 0 32 20" fill="none">
-              <path d="M4 10 L10 3 L10 17 Z" fill="#00F5FF" opacity="0.9" />
-              <ellipse cx="19" cy="10" rx="11" ry="7" fill="#00F5FF" opacity="0.85" />
+            <svg width="18" height="18" viewBox="0 0 32 20" fill="none">
+              <path d="M4 10 L10 3 L10 17 Z" fill="#00D4C8" opacity="0.9" />
+              <ellipse cx="19" cy="10" rx="11" ry="7" fill="#00D4C8" opacity="0.85" />
               <path d="M14 3 Q19 1 24 4 L22 7 Q19 5 14 7 Z" fill="white" opacity="0.4" />
               <circle cx="27" cy="9" r="1.5" fill="white" />
             </svg>
           </div>
           <div>
             <span style={{
-              fontSize: 18, fontWeight: 700, color: 'white',
+              fontSize: 16, fontWeight: 700, color: 'var(--text-primary)',
               letterSpacing: '0.04em',
               fontFamily: 'var(--font-serif)',
             }}>
-              釣果情報<span style={{ color: '#00F5FF' }}>.com</span>
+              釣果情報<span style={{ color: 'var(--color-cyan)' }}>.com</span>
             </span>
             <span style={{
-              display: 'block', fontSize: 10,
-              color: 'rgba(240,244,255,0.35)', lineHeight: 1, marginTop: 2,
+              display: 'block', fontSize: 9,
+              color: 'var(--text-muted)', lineHeight: 1, marginTop: 1,
               letterSpacing: '0.08em',
             }}>
               {subtitle}
@@ -185,19 +185,17 @@ export default function SiteHeader({ updatedAt, subtitle = '関東圏' }: Props)
         {updatedAt && (
           <div style={{
             display: 'flex', alignItems: 'center', gap: 6,
-            fontSize: '0.75rem', color: '#00d4c8',
+            fontSize: 11, color: 'var(--text-secondary)',
             marginLeft: 'auto', flexShrink: 0,
-            letterSpacing: '0.03em',
           }}>
             <span style={{
-              width: 6, height: 6, borderRadius: '50%',
-              background: '#00F5FF', display: 'inline-block',
-              boxShadow: '0 0 8px rgba(0,245,255,0.80)',
+              width: 5, height: 5, borderRadius: '50%',
+              background: 'var(--color-cyan)', display: 'inline-block',
+              boxShadow: '0 0 6px rgba(0,212,200,0.70)',
             }} />
-            <span>更新: {updatedAt}</span>
+            <span className="data-value">{updatedAt}</span>
           </div>
         )}
-
       </div>
     </header>
   )

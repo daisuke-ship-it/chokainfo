@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Fish } from 'lucide-react'
+import { Fish, TrendingUp, MapPin, ArrowRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import SiteHeader from '@/components/SiteHeader'
 
@@ -28,21 +28,16 @@ export type FishRecord = {
   name: string
 }
 
-// species_name → 同グループの全 species_name[]
 export type SpeciesGroupMap = Record<string, string[]>
 
 // ── エリア・魚種スラッグ ──────────────────────────────────────
 const FISH_SLUGS: Record<string, string> = {
-  'タチウオ': 'tachiuo',
-  'アジ':     'aji',
-  'サワラ':   'sawara',
-  'シーバス': 'seabass',
+  'タチウオ': 'tachiuo', 'アジ': 'aji', 'サワラ': 'sawara',
+  'シーバス': 'seabass', 'マダイ': 'madai', 'ヒラメ': 'hirame',
+  'シロギス': 'shirogisu', 'トラフグ': 'torafugu',
 }
 const AREA_SLUGS: Record<string, string> = {
-  '東京湾': 'tokyo',
-  '相模湾': 'sagami',
-  '外房':   'sotobo',
-  '南房':   'minamibo',
+  '東京湾': 'tokyo', '相模湾': 'sagami', '外房': 'sotobo', '南房': 'minamibo',
 }
 
 // ── エリア定義 ────────────────────────────────────────────────
@@ -69,8 +64,8 @@ type Recommendation = {
 // ── 型 ────────────────────────────────────────────────────────
 type SpeciesStat = {
   name: string
-  avgMax: number       // 直近7日の平均釣果
-  shipCount: number    // 直近7日の出船数
+  avgMax: number
+  shipCount: number
   trend: 'up' | 'flat' | 'down'
 }
 
@@ -78,7 +73,7 @@ type AreaStat = {
   areaName: string
   slug: AreaSlug
   description: string
-  weekRecords: number  // 直近7日の件数
+  weekRecords: number
   topSpecies: SpeciesStat[]
   aiSummary: string | null
   aiSummaryDate: string | null
@@ -126,7 +121,6 @@ async function getAreaStats(): Promise<AreaStat[]> {
     const recentRows = areaRows.filter((r) => r.sail_date && r.sail_date >= cutoff7Str)
     const prevRows   = areaRows.filter((r) => r.sail_date && r.sail_date < cutoff7Str)
 
-    // 集計ヘルパー: species_name → { total, count }
     function buildMap(rs: RawRow[]) {
       const m = new Map<string, { total: number; count: number; ships: Set<string> }>()
       rs.forEach((row, i) => {
@@ -160,19 +154,13 @@ async function getAreaStats(): Promise<AreaStat[]> {
           if (ratio >= 1.1) trend = 'up'
           else if (ratio <= 0.9) trend = 'down'
         }
-        return {
-          name: speciesName,
-          avgMax: Math.round(recentAvg),
-          shipCount: v.ships.size,
-          trend,
-        }
+        return { name: speciesName, avgMax: Math.round(recentAvg), shipCount: v.ships.size, trend }
       })
-      .sort((a, b) => b.avgMax - a.avgMax)
+      .sort((a, b) => b.shipCount - a.shipCount || b.avgMax - a.avgMax)
+      .slice(0, 6)
 
     return {
-      areaName: name,
-      slug,
-      description,
+      areaName: name, slug, description,
       weekRecords: recentRows.length,
       topSpecies,
       aiSummary: null,
@@ -279,7 +267,6 @@ async function getLatestUpdatedAt(): Promise<string | null> {
   return data?.created_at ?? null
 }
 
-// ── 下位ページで使う汎用データ取得関数（他ページが直接 import できるように export） ──
 export async function fetchEnvDataMap(): Promise<EnvDataMap> {
   const { data } = await supabase
     .from('environment_data')
@@ -322,136 +309,84 @@ export default async function Home() {
   })
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-
-      {/* ── Header ─────────────────────────────────────────────── */}
+    <div style={{ minHeight: '100vh' }}>
       <SiteHeader updatedAt={nowStr} />
 
-      {/* ── Hero ────────────────────────────────────────────────── */}
-      <div style={{ position: 'relative', overflow: 'hidden', minHeight: 280 }}>
-        {/* 背景画像 */}
-        <img
-          src="https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1920&q=80"
-          alt="海釣り"
-          style={{
-            position: 'absolute', inset: 0,
-            width: '100%', height: '100%',
-            objectFit: 'cover',
-            objectPosition: 'center',
-            filter: 'brightness(0.45)',
-          }}
-        />
-        {/* 下部フェード */}
+      {/* ── Hero ─────────────────────────────────────────── */}
+      <section style={{ position: 'relative', overflow: 'hidden' }}>
         <div style={{
           position: 'absolute', inset: 0,
-          background: 'linear-gradient(to bottom, transparent 40%, var(--bg-surface) 100%)',
+          background: 'linear-gradient(135deg, rgba(0,212,200,0.06) 0%, transparent 40%, rgba(0,212,200,0.03) 100%)',
         }} />
-        {/* コンテンツ */}
-        <div style={{ position: 'relative', paddingTop: 48, paddingBottom: 56 }}>
-          <div className="page-container">
-            <p style={{
-              fontSize: 10, fontWeight: 700, letterSpacing: '0.16em',
-              color: '#00d4c8', textTransform: 'uppercase', marginBottom: 12,
-            }}>
-              FISHING REPORT — DAILY UPDATE
-            </p>
-            <h1 style={{
-              fontSize: 'clamp(26px, 5vw, 40px)', fontWeight: 700, color: '#f0f4ff',
-              fontFamily: 'var(--font-serif)', letterSpacing: '0.05em',
-              lineHeight: 1.2, marginBottom: 12,
-            }}>
-              関東圏の船釣り釣果まとめ
-            </h1>
-            <p style={{
-              fontSize: 16, fontWeight: 500, color: '#00d4c8',
-              marginBottom: 10, letterSpacing: '0.04em',
-            }}>
-              釣果データで、海を見る。
-            </p>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', maxWidth: 480, lineHeight: 1.65 }}>
-              関東圏の複数船宿から釣果データを毎日自動収集。エリアを選んで最新の釣果情報を確認できます。
-            </p>
-          </div>
+        <div className="page-container" style={{ position: 'relative', padding: '40px 16px 32px' }}>
+          <p className="section-label" style={{ marginBottom: 10, color: 'var(--color-cyan)' }}>
+            DAILY FISHING REPORT
+          </p>
+          <h1 style={{ marginBottom: 8 }}>
+            関東圏の船釣り釣果
+          </h1>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', maxWidth: 420, lineHeight: 1.7 }}>
+            複数船宿の釣果データを毎日自動収集。
+            <br />エリアを選んで最新の釣況を確認できます。
+          </p>
         </div>
-      </div>
+      </section>
 
-      {/* ── Main ─────────────────────────────────────────────────── */}
-      <main style={{ padding: '32px 0 100px' }}>
-        <div className="page-container">
+      {/* ── Main ──────────────────────────────────────────── */}
+      <main className="page-container" style={{ paddingTop: 8, paddingBottom: 100 }}>
 
-          {/* 今週末のおすすめ */}
-          {recommendations.length > 0 && (
-            <div style={{ marginBottom: 32 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <h2 style={{ fontSize: 15, fontWeight: 700, color: '#f0f4ff', fontFamily: 'var(--font-serif)', letterSpacing: '0.04em' }}>
-                  今週末のおすすめ
-                </h2>
-                <Link href="/analysis" style={{ fontSize: 11, color: '#00d4c8', opacity: 0.8 }}>
-                  詳細分析 →
-                </Link>
+        {/* おすすめ */}
+        {recommendations.length > 0 && (
+          <section style={{ marginBottom: 32 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <TrendingUp size={15} style={{ color: 'var(--color-cyan)' }} />
+                <span className="section-label">今週の注目</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {recommendations.map((rec) => (
-                  <TopRecommendationCard key={`${rec.area}-${rec.fish}`} rec={rec} />
-                ))}
-              </div>
+              <Link href="/analysis" style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                分析 <ArrowRight size={11} style={{ verticalAlign: '-1px' }} />
+              </Link>
             </div>
-          )}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
+              {recommendations.map((rec) => (
+                <RecommendationCard key={`${rec.area}-${rec.fish}`} rec={rec} />
+              ))}
+            </div>
+          </section>
+        )}
 
-          {/* エリアカード 2×2グリッド */}
+        {/* エリアカード */}
+        <section>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+            <MapPin size={15} style={{ color: 'var(--color-cyan)' }} />
+            <span className="section-label">エリア別釣況</span>
+          </div>
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-            gap: 20,
-            marginBottom: 40,
+            gap: 16,
           }}>
             {statsWithSummary.map((stat) => (
               <AreaCard key={stat.slug} stat={stat} />
             ))}
           </div>
-
-          {/* 使い方ガイド */}
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 100%)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            borderTop: '1px solid rgba(255,255,255,0.20)',
-            border: '1px solid rgba(255,255,255,0.10)',
-            borderRadius: 20,
-            padding: '20px 24px',
-          }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 10, letterSpacing: '0.08em' }}>
-              ご利用方法
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {[
-                'エリアカードをタップして詳細な釣果一覧を確認',
-                '魚種・釣り方・期間でフィルタリングして比較',
-                '船長コメントや釣果グラフで傾向を分析',
-              ].map((text, i) => (
-                <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                  <span style={{
-                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                    width: 20, height: 20, borderRadius: '50%',
-                    background: 'rgba(0,212,200,0.15)', color: '#00d4c8',
-                    fontSize: 11, fontWeight: 700, flexShrink: 0, marginTop: 1,
-                  }}>{i + 1}</span>
-                  <span style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>{text}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        </section>
       </main>
 
-      {/* ── Footer ─────────────────────────────────────────────── */}
-      <footer style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)', padding: '32px 0' }}>
-        <div className="page-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-          <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-            © {new Date().getFullYear()} 釣果情報.com — 関東圏 船釣り釣果情報
+      {/* ── Footer ──────────────────────────────────────── */}
+      <footer style={{
+        borderTop: '1px solid var(--border-subtle)',
+        padding: '28px 0',
+      }}>
+        <div className="page-container" style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          flexWrap: 'wrap', gap: 8,
+        }}>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+            &copy; {new Date().getFullYear()} 釣果情報.com
           </span>
-          <span style={{ fontSize: 11, color: 'var(--border-strong)' }}>
-            データは各船宿サイトより自動収集しています
+          <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+            データは各船宿サイトより自動収集
           </span>
         </div>
       </footer>
@@ -459,157 +394,135 @@ export default async function Home() {
   )
 }
 
-// ── TopRecommendationCard ─────────────────────────────────────
-const RANK_BADGE: Record<number, { bg: string; border: string; color: string }> = {
-  1: { bg: 'rgba(0,212,200,0.15)',   border: 'rgba(0,212,200,0.5)', color: '#00d4c8' },
-  2: { bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.2)', color: '#8899bb' },
-  3: { bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.12)', color: '#4a5a7a' },
-}
-
-function TopRecommendationCard({ rec }: { rec: Recommendation }) {
+// ── RecommendationCard ────────────────────────────────────────
+function RecommendationCard({ rec }: { rec: Recommendation }) {
   const areaSlug = AREA_SLUGS[rec.area] ?? 'tokyo'
   const fishSlug = FISH_SLUGS[rec.fish]
-  const href     = fishSlug ? `/fish/${fishSlug}/${areaSlug}` : `/area/${areaSlug}`
+  const href = fishSlug ? `/fish/${fishSlug}/${areaSlug}` : `/area/${areaSlug}`
+
   const scoreColor =
-    rec.score >= 70 ? '#4ade80' :
-    rec.score >= 40 ? '#facc15' : '#94a3b8'
+    rec.score >= 70 ? '#34D399' :
+    rec.score >= 40 ? '#FBBF24' : 'var(--text-secondary)'
 
   return (
     <Link href={href} style={{ textDecoration: 'none' }}>
-      <div style={{
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 100%)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderTop: '1px solid rgba(255,255,255,0.20)',
-        border: '1px solid rgba(255,255,255,0.10)',
-        borderRadius: 16,
-        padding: '14px 18px',
+      <div className="glass-card" style={{
+        padding: '14px 16px',
         display: 'flex', alignItems: 'center', gap: 14,
-        cursor: 'pointer',
       }}>
+        {/* Score */}
         <div style={{
-          width: 24, height: 24, borderRadius: 6,
-          background: RANK_BADGE[rec.rank].bg,
-          border: `1px solid ${RANK_BADGE[rec.rank].border}`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 11, fontWeight: 700, color: RANK_BADGE[rec.rank].color,
+          width: 44, height: 44, borderRadius: 12,
+          background: `${scoreColor}12`,
+          border: `1px solid ${scoreColor}30`,
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
           flexShrink: 0,
-        }}>{rec.rank}</div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <span style={{ fontSize: 15, fontWeight: 700, color: '#f0f4ff' }}>
-            {rec.area} × {rec.fish}
+        }}>
+          <span className="data-value" style={{ fontSize: 18, fontWeight: 700, color: scoreColor, lineHeight: 1 }}>
+            {rec.score}
           </span>
-          <div style={{ display: 'flex', gap: 14, marginTop: 4, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 11, color: '#8899bb' }}>
-              平均 <span style={{ color: '#f0f4ff', fontWeight: 600 }}>{rec.avgCount}尾</span>
+        </div>
+
+        {/* Info */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 3 }}>
+            {rec.fish}
+            <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 400, marginLeft: 8 }}>
+              {rec.area}
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: 12, fontSize: 12, color: 'var(--text-secondary)' }}>
+            <span>
+              平均 <span className="data-value" style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{rec.avgCount}</span>尾
             </span>
             {rec.wowPercent !== null && (
-              <span style={{ fontSize: 11, color: '#8899bb' }}>
-                前週比 <span style={{ color: rec.wowPercent >= 0 ? '#4ade80' : '#f87171', fontWeight: 600 }}>
+              <span>
+                前週比 <span style={{
+                  color: rec.wowPercent >= 0 ? '#34D399' : '#F87171',
+                  fontWeight: 500,
+                }}>
                   {rec.wowPercent >= 0 ? '+' : ''}{rec.wowPercent}%
                 </span>
               </span>
             )}
-            <span style={{ fontSize: 11, color: '#8899bb' }}>
-              <span style={{ color: '#f0f4ff', fontWeight: 600 }}>{rec.shipCount}</span>船宿
-            </span>
+            <span>{rec.shipCount}船宿</span>
           </div>
-        </div>
-        <div style={{ textAlign: 'center', flexShrink: 0 }}>
-          <div style={{ fontSize: 20, fontWeight: 700, color: scoreColor, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
-            {rec.score}
-          </div>
-          <div style={{ fontSize: 9, color: '#8899bb', marginTop: 2 }}>スコア</div>
         </div>
       </div>
     </Link>
   )
 }
 
-// ── トレンドインジケーター ────────────────────────────────────
-const TREND = {
-  up:   { icon: '↑', color: '#22c55e' },
-  flat: { icon: '→', color: '#6b7280' },
-  down: { icon: '↓', color: '#ef4444' },
+// ── Trend indicator ──────────────────────────────────────────
+const TREND_ICON: Record<string, { icon: string; color: string }> = {
+  up:   { icon: '↑', color: '#34D399' },
+  flat: { icon: '→', color: 'var(--text-secondary)' },
+  down: { icon: '↓', color: '#F87171' },
 }
 
-// ── AreaCard コンポーネント ────────────────────────────────────
+// ── AreaCard ──────────────────────────────────────────────────
 function AreaCard({ stat }: { stat: AreaStat }) {
   const { slug, areaName, description, weekRecords, topSpecies, aiSummary, aiSummaryDate } = stat
   const hasData = weekRecords > 0 || topSpecies.length > 0
 
   return (
     <Link href={`/area/${slug}`} style={{ textDecoration: 'none' }}>
-      <div style={{
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 100%)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderTop: '1px solid rgba(255,255,255,0.20)',
-        border: '1px solid rgba(255,255,255,0.10)',
-        borderRadius: 20,
-        padding: '24px',
-        cursor: 'pointer',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 0,
-        transition: 'border-color 0.15s, box-shadow 0.15s',
+      <div className="glass-card" style={{
+        height: '100%', display: 'flex', flexDirection: 'column',
       }}>
-
-        {/* カードヘッダー */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-          <h2 style={{
-            fontSize: 22, fontWeight: 700, color: '#f0f4ff', margin: 0,
-            fontFamily: 'var(--font-serif)', letterSpacing: '0.04em',
-          }}>
-            {areaName}
-          </h2>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+          <div>
+            <h2 style={{ fontSize: 20, margin: 0 }}>{areaName}</h2>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{description}</p>
+          </div>
           {weekRecords > 0 && (
             <span style={{
-              fontSize: 10, fontWeight: 700, padding: '3px 9px',
+              fontSize: 11, fontWeight: 600, padding: '3px 10px',
               borderRadius: 'var(--radius-pill)',
-              background: 'rgba(0,212,200,0.12)', color: '#00d4c8',
-              border: '1px solid rgba(0,212,200,0.35)',
-              whiteSpace: 'nowrap', flexShrink: 0, marginLeft: 8,
+              background: 'var(--color-cyan-dim)', color: 'var(--color-cyan)',
+              border: '1px solid rgba(0,212,200,0.25)',
+              whiteSpace: 'nowrap', flexShrink: 0,
             }}>
-              今週{weekRecords}件
+              {weekRecords}件
             </span>
           )}
         </div>
-        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>{description}</p>
 
-        {/* 区切り線 */}
-        <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', marginBottom: 16 }} />
+        {/* Divider */}
+        <div style={{ height: 1, background: 'var(--border-subtle)', margin: '12px 0' }} />
 
         {hasData ? (
           <>
-            {/* 今週の注目魚種 */}
+            {/* Species list */}
             {topSpecies.length > 0 && (
-              <div style={{ marginBottom: 16 }}>
-                <p style={{ fontSize: 10, color: '#8899bb', marginBottom: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                  今週の釣果報告
+              <div style={{ marginBottom: 14 }}>
+                <p className="section-label" style={{ marginBottom: 8, fontSize: 10 }}>
+                  直近7日の釣果
                 </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {topSpecies.map((sp) => {
-                    const t = TREND[sp.trend]
+                    const t = TREND_ICON[sp.trend]
                     return (
-                      <div key={sp.name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        {/* Lucide Fish icon */}
-                        <Fish size={14} strokeWidth={1.5} style={{ color: '#00d4c8', flexShrink: 0 }} />
-                        {/* 魚種名 */}
-                        <span style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0', flex: 1 }}>
+                      <div key={sp.name} style={{
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        padding: '4px 0',
+                      }}>
+                        <Fish size={13} strokeWidth={1.5} style={{ color: 'var(--color-cyan)', opacity: 0.7, flexShrink: 0 }} />
+                        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', flex: 1 }}>
                           {sp.name}
                         </span>
-                        {/* トレンド */}
-                        <span style={{ fontSize: 13, fontWeight: 700, color: t.color, minWidth: 14, textAlign: 'center' }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: t.color, width: 16, textAlign: 'center' }}>
                           {t.icon}
                         </span>
-                        {/* 平均釣果 */}
-                        <span style={{ fontSize: 13, fontWeight: 700, color: '#f0f4ff', minWidth: 30, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                        <span className="data-value" style={{
+                          fontSize: 14, fontWeight: 600, color: 'var(--text-primary)',
+                          width: 36, textAlign: 'right',
+                        }}>
                           {sp.avgMax}
                         </span>
-                        {/* 出船数 */}
-                        <span style={{ fontSize: 10, color: '#8899bb', minWidth: 36 }}>
+                        <span style={{ fontSize: 10, color: 'var(--text-muted)', width: 32 }}>
                           {sp.shipCount}船
                         </span>
                       </div>
@@ -619,37 +532,37 @@ function AreaCard({ stat }: { stat: AreaStat }) {
               </div>
             )}
 
-            {/* AIサマリー（全文） */}
+            {/* AI Summary */}
             {aiSummary && (
               <div style={{
                 background: 'rgba(0,212,200,0.04)',
-                border: '1px solid rgba(0,212,200,0.15)',
+                border: '1px solid rgba(0,212,200,0.12)',
                 borderRadius: 10,
                 padding: '10px 12px',
-                marginBottom: 14,
+                marginBottom: 12,
               }}>
-                <p style={{ fontSize: 10, color: '#00d4c8', marginBottom: 4, fontWeight: 600, opacity: 0.8 }}>
-                  ✦ {aiSummaryDate ? `${aiSummaryDate.replace(/-/g, '/')}の状況` : '状況'}
+                <p style={{ fontSize: 10, color: 'var(--color-cyan)', marginBottom: 4, fontWeight: 600, opacity: 0.8 }}>
+                  {aiSummaryDate ? `${aiSummaryDate.replace(/-/g, '/')} の状況` : '状況'}
                 </p>
-                <p style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.65, margin: 0 }}>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.7, margin: 0 }}>
                   {aiSummary}
                 </p>
               </div>
             )}
           </>
         ) : (
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0' }}>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '24px 0' }}>
             データ収集準備中
           </p>
         )}
 
-        {/* 詳細リンク */}
-        <div style={{ marginTop: 'auto', paddingTop: 12 }}>
+        {/* Footer link */}
+        <div style={{ marginTop: 'auto', paddingTop: 10 }}>
           <span style={{
-            fontSize: 13, fontWeight: 600, color: '#00d4c8',
+            fontSize: 13, fontWeight: 500, color: 'var(--color-cyan)',
             display: 'flex', alignItems: 'center', gap: 4,
           }}>
-            釣果一覧を見る →
+            釣果一覧を見る <ArrowRight size={13} />
           </span>
         </div>
       </div>
