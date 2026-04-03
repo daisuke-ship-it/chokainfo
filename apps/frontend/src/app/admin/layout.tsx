@@ -1,4 +1,5 @@
 import React from 'react'
+import Link from 'next/link'
 import LogoutButton from './LogoutButton'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -18,9 +19,39 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           zIndex: 100,
         }}
       >
-        <span style={{ color: 'var(--text)', fontWeight: 500, fontSize: '15px' }}>
-          ⚙ 管理画面
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <span style={{ color: 'var(--text)', fontWeight: 500, fontSize: '15px' }}>
+            ⚙ 管理画面
+          </span>
+          <nav style={{ display: 'flex', gap: '4px' }}>
+            <Link
+              href="/admin/shipyards"
+              style={{
+                color: 'var(--text-muted)',
+                fontSize: '13px',
+                padding: '4px 12px',
+                borderRadius: '6px',
+                textDecoration: 'none',
+                border: '1px solid transparent',
+              }}
+            >
+              船宿管理
+            </Link>
+            <Link
+              href="/admin/master"
+              style={{
+                color: 'var(--text-muted)',
+                fontSize: '13px',
+                padding: '4px 12px',
+                borderRadius: '6px',
+                textDecoration: 'none',
+                border: '1px solid transparent',
+              }}
+            >
+              マスター管理
+            </Link>
+          </nav>
+        </div>
         <LogoutButton />
       </header>
       <main>{children}</main>
