@@ -32,7 +32,12 @@ const AREA_SLUGS: Record<string, string> = {
 type RawRow = {
   sail_date: string | null
   shipyards: { name: string; areas: { name: string } | null } | null
-  catches_v2: { species_name_raw: string | null; count: number | null }[]
+  catches_v2: {
+    species_name_raw: string | null
+    count: number | null
+    detail_type: string | null
+    fish_species: { name: string } | null
+  }[]
 }
 
 type DailyEntry = {
@@ -77,7 +82,7 @@ async function fetchRows(): Promise<RawRow[]> {
 
   const { data } = await supabase
     .from('fishing_trips')
-    .select('sail_date, shipyards ( name, areas ( name ) ), catches_v2 ( species_name_raw, count )')
+    .select('sail_date, shipyards ( name, areas ( name ) ), catches_v2 ( species_name_raw, count, detail_type, fish_species ( name ) )')
     .gte('sail_date', cutoffStr)
     .order('sail_date', { ascending: false })
 
@@ -113,8 +118,10 @@ function buildAgg(rows: RawRow[]): Map<string, DailyEntry> {
     const date = row.sail_date
     if (!area || !date) continue
     for (const d of row.catches_v2) {
-      if (!d.species_name_raw || d.count === null || d.count <= 0) continue
-      const key = `${area}|${d.species_name_raw}|${date}`
+      if (d.detail_type !== 'catch') continue
+      const speciesName = d.fish_species?.name ?? d.species_name_raw
+      if (!speciesName || d.count === null || d.count <= 0) continue
+      const key = `${area}|${speciesName}|${date}`
       const cur = agg.get(key) ?? { sumCount: 0, nEntries: 0, shipyards: new Set<string>() }
       cur.sumCount  += d.count
       cur.nEntries  += 1
@@ -274,9 +281,11 @@ function computeTide(
     const tideType = envMap[date]
     if (!tideType) continue
     for (const d of row.catches_v2) {
-      if (!d.species_name_raw || d.count === null || d.count <= 0) continue
-      if (!TARGET_FISH.includes(d.species_name_raw)) continue
-      const key = `${tideType}|${d.species_name_raw}`
+      if (d.detail_type !== 'catch') continue
+      const speciesName = d.fish_species?.name ?? d.species_name_raw
+      if (!speciesName || d.count === null || d.count <= 0) continue
+      if (!TARGET_FISH.includes(speciesName)) continue
+      const key = `${tideType}|${speciesName}`
       const cur = map.get(key) ?? { sumCount: 0, nEntries: 0 }
       cur.sumCount += d.count
       cur.nEntries += 1

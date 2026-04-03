@@ -88,7 +88,12 @@ type AreaStat = {
 type RawRow = {
   sail_date: string | null
   shipyards: { areas: { name: string } | null } | null
-  catches_v2: { species_name_raw: string | null; count: number | null }[]
+  catches_v2: {
+    species_name_raw: string | null
+    count: number | null
+    detail_type: string | null
+    fish_species: { name: string } | null
+  }[]
 }
 
 function jstDateStr(d: Date): string {
@@ -109,7 +114,7 @@ async function getAreaStats(): Promise<AreaStat[]> {
     .select(`
       sail_date,
       shipyards ( areas ( name ) ),
-      catches_v2 ( species_name_raw, count )
+      catches_v2 ( species_name_raw, count, detail_type, fish_species ( name ) )
     `)
     .gte('sail_date', cutoff14Str)
     .order('sail_date', { ascending: false })
@@ -126,12 +131,14 @@ async function getAreaStats(): Promise<AreaStat[]> {
       const m = new Map<string, { total: number; count: number; ships: Set<string> }>()
       rs.forEach((row, i) => {
         for (const d of row.catches_v2) {
-          if (!d.species_name_raw || d.count === null) continue
-          const cur = m.get(d.species_name_raw) ?? { total: 0, count: 0, ships: new Set() }
+          if (d.detail_type !== 'catch') continue
+          const speciesName = d.fish_species?.name ?? d.species_name_raw
+          if (!speciesName || d.count === null) continue
+          const cur = m.get(speciesName) ?? { total: 0, count: 0, ships: new Set() }
           cur.total += d.count
           cur.count += 1
-          cur.ships.add(String(i)) // row index as proxy for distinct records
-          m.set(d.species_name_raw, cur)
+          cur.ships.add(String(i))
+          m.set(speciesName, cur)
         }
       })
       return m
@@ -180,14 +187,19 @@ async function getRecommendations(): Promise<Recommendation[]> {
 
   const { data } = await supabase
     .from('fishing_trips')
-    .select('sail_date, shipyards ( name, areas ( name ) ), catches_v2 ( species_name_raw, count )')
+    .select('sail_date, shipyards ( name, areas ( name ) ), catches_v2 ( species_name_raw, count, detail_type, fish_species ( name ) )')
     .gte('sail_date', cutoffStr)
     .order('sail_date', { ascending: false })
 
   type RawRec = {
     sail_date: string | null
     shipyards: { name: string; areas: { name: string } | null } | null
-    catches_v2: { species_name_raw: string | null; count: number | null }[]
+    catches_v2: {
+      species_name_raw: string | null
+      count: number | null
+      detail_type: string | null
+      fish_species: { name: string } | null
+    }[]
   }
   const rows = (data ?? []) as unknown as RawRec[]
 
@@ -211,8 +223,10 @@ async function getRecommendations(): Promise<Recommendation[]> {
     const target = isLast7 ? last7 : isPrev7 ? prev7 : null
     if (!target) continue
     for (const d of row.catches_v2) {
-      if (!d.species_name_raw || d.count === null || d.count <= 0) continue
-      const key = `${area}|${d.species_name_raw}`
+      if (d.detail_type !== 'catch') continue
+      const speciesName = d.fish_species?.name ?? d.species_name_raw
+      if (!speciesName || d.count === null || d.count <= 0) continue
+      const key = `${area}|${speciesName}`
       const cur = target.get(key) ?? { sumCount: 0, nEntries: 0, shipyards: new Set<string>() }
       cur.sumCount += d.count
       cur.nEntries += 1
