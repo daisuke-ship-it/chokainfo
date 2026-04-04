@@ -50,6 +50,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             >
               マスター管理
             </Link>
+            <Link
+              href="/admin/anomalies"
+              style={{
+                color: 'var(--text-muted)',
+                fontSize: '13px',
+                padding: '4px 12px',
+                borderRadius: '6px',
+                textDecoration: 'none',
+                border: '1px solid transparent',
+              }}
+            >
+              異常値
+            </Link>
           </nav>
         </div>
         <LogoutButton />
