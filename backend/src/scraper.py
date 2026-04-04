@@ -230,6 +230,7 @@ def main():
     sys.path.insert(0, str(Path(__file__).parent))
     from handlers import get_handler, HANDLER_MAP
     from utils.db_v2 import update_last_scraped_at
+    from utils.anomaly import check_anomalies, refresh_baselines
 
     # ── マスタデータ取得 ──────────────────────────────────────────────────
     try:
@@ -265,9 +266,10 @@ def main():
     logger.info(f"対象船宿: {len(active_yards)} 件")
 
     # ── スクレイピングループ ──────────────────────────────────────────────
-    total_saved = 0
-    skipped     = 0
-    errors      = []
+    total_saved  = 0
+    skipped      = 0
+    errors       = []
+    all_trip_ids: list[int] = []  # 異常値検知用
 
     for yard in active_yards:
         yard_id   = yard["id"]
@@ -308,6 +310,24 @@ def main():
                 logger.info(json.dumps(result["sample"], ensure_ascii=False, indent=2)[:500])
 
         time.sleep(INTER_REQUEST_WAIT)
+
+    # ── 異常値検知 ─────────────────────────────────────────────────────
+    if not args.dry_run and total_saved > 0:
+        try:
+            # 今日保存/更新された trip を取得
+            today_str = datetime.now().strftime("%Y-%m-%d")
+            recent = db.table("fishing_trips").select("id").gte(
+                "created_at", today_str
+            ).execute()
+            recent_ids = [r["id"] for r in (recent.data or [])]
+
+            if recent_ids:
+                # ベースライン更新（軽量: 全 catches_v2 集計）
+                refresh_baselines(db, logger)
+                # 異常値チェック
+                check_anomalies(db, recent_ids, logger)
+        except Exception as e:
+            logger.warning(f"  異常値検知でエラー: {e}")
 
     # ── サマリー ──────────────────────────────────────────────────────────
     logger.info("\n" + "=" * 60)

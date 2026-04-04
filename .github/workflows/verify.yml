@@ -186,9 +186,56 @@ jobs:
             if (yellow.length > 0) yellow.forEach(sy => console.log(`  - [${sy.id}] ${sy.name} (今日:${sy.today} / 先週平均:${sy.lwAvg})`))
             console.log(`🟢 正常: ${green.length}件`)
 
+            // ── 異常値レポート ────────────────────────────────────
+            const anomalies = await supaFetch(
+              `catches_v2?confidence_score=lt.0.8&select=id,species_name_raw,count,size_text,confidence_score,trip_id,fishing_trips(sail_date,boat_name_raw,shipyards(name))&order=confidence_score.asc&limit=20`
+            )
+
+            const s3 = core.summary.addHeading('⚠️ 異常値フラグ（confidence < 0.8）', 3)
+            if (anomalies.length > 0) {
+              s3.addTable([
+                [
+                  { data: 'Score', header: true },
+                  { data: '船宿', header: true },
+                  { data: '日付', header: true },
+                  { data: '魚種', header: true },
+                  { data: '数量', header: true },
+                  { data: 'ID', header: true },
+                ],
+                ...anomalies.map(a => {
+                  const trip = a.fishing_trips || {}
+                  const sy = trip.shipyards || {}
+                  return [
+                    { data: String(a.confidence_score) },
+                    { data: sy.name || '—' },
+                    { data: trip.sail_date || '—' },
+                    { data: a.species_name_raw || '—' },
+                    { data: String(a.count ?? '—') },
+                    { data: String(a.id) },
+                  ]
+                }),
+              ])
+              s3.addRaw(`\n計 ${anomalies.length} 件\n`)
+            } else {
+              s3.addRaw('なし\n')
+            }
+            await s3.write()
+
+            console.log(`\n⚠️ 異常値: ${anomalies.length}件`)
+            if (anomalies.length > 0) {
+              anomalies.forEach(a => {
+                const trip = a.fishing_trips || {}
+                const sy = trip.shipyards || {}
+                console.log(`  [${a.confidence_score}] ${sy.name || '?'} ${trip.sail_date || '?'} ${a.species_name_raw} ${a.count}`)
+              })
+            }
+
             // 🔴 が1件以上あれば warning アノテーションを付けて終了
             // （job 自体は success のまま — スクレイパーは成功扱い）
             if (red.length > 0) {
               const names = red.map(s => s.name).join('、')
               core.warning(`${red.length}件の船宿が今日0件です: ${names}`)
+            }
+            if (anomalies.length > 0) {
+              core.warning(`${anomalies.length}件の異常値フラグがあります`)
             }
