@@ -8,8 +8,8 @@ on:
   #   workflows: ["scraper"]
   #   types: [completed]
   schedule:
-    # 毎日 09:30 JST (00:30 UTC) に実行 ※スクレイパー後に合わせて調整してください
-    - cron: '30 0 * * *'
+    # 毎日 20:30 JST (11:30 UTC) に実行 ※スクレイパー最終実行（19:00 JST）後
+    - cron: '30 11 * * *'
 
 jobs:
   verify:
@@ -63,8 +63,8 @@ jobs:
             // ── データ取得 ─────────────────────────────────────────────
             const [shipyards, todayCatches, lwCatches] = await Promise.all([
               supaFetch('shipyards?is_active=eq.true&select=id,name&order=id.asc'),
-              supaFetch(`catches?sail_date=eq.${todayStr}&select=shipyard_id,source_url`),
-              supaFetch(`catches?sail_date=gte.${lw7Str}&sail_date=lte.${lw1Str}&select=shipyard_id,source_url,sail_date`),
+              supaFetch(`fishing_trips?sail_date=eq.${todayStr}&select=shipyard_id,source_url`),
+              supaFetch(`fishing_trips?sail_date=gte.${lw7Str}&sail_date=lte.${lw1Str}&select=shipyard_id,source_url,sail_date`),
             ])
 
             console.log(`アクティブ船宿: ${shipyards.length}件`)

@@ -314,18 +314,21 @@ def main():
     # ── 異常値検知 ─────────────────────────────────────────────────────
     if not args.dry_run and total_saved > 0:
         try:
-            # 今日保存/更新された trip を取得
-            today_str = datetime.now().strftime("%Y-%m-%d")
-            recent = db.table("fishing_trips").select("id").gte(
-                "created_at", today_str
+            # 今日の sail_date を持つ trip を取得（JST 基準）
+            from datetime import timezone, timedelta as td
+            jst_now = datetime.now(timezone(td(hours=9)))
+            today_jst = jst_now.strftime("%Y-%m-%d")
+            recent = db.table("fishing_trips").select("id").eq(
+                "sail_date", today_jst
             ).execute()
             recent_ids = [r["id"] for r in (recent.data or [])]
+            logger.info(f"異常値検知: sail_date={today_jst} → {len(recent_ids)} trips")
 
             if recent_ids:
-                # ベースライン更新（軽量: 全 catches_v2 集計）
                 refresh_baselines(db, logger)
-                # 異常値チェック
                 check_anomalies(db, recent_ids, logger)
+            else:
+                logger.info("  対象 trip なし → スキップ")
         except Exception as e:
             logger.warning(f"  異常値検知でエラー: {e}")
 
