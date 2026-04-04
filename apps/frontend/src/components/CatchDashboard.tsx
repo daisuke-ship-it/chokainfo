@@ -189,10 +189,10 @@ function FilterPill({
         fontSize: 12,
         fontWeight: active ? 600 : 400,
         cursor: disabled ? 'not-allowed' : 'pointer',
-        border: active ? '1px solid #38BDF8' : '1px solid rgba(255,255,255,0.15)',
-        background: disabled ? 'var(--surface-2)' : active ? 'rgba(56,189,248,0.10)' : 'rgba(255,255,255,0.04)',
-        color: disabled ? 'var(--text-muted)' : active ? '#38BDF8' : 'var(--text-sub)',
-        boxShadow: active ? '0 0 12px rgba(56,189,248,0.30), inset 0 0 8px rgba(56,189,248,0.05)' : 'none',
+        border: active ? '1px solid var(--color-cyan)' : '1px solid rgba(255,255,255,0.15)',
+        background: disabled ? 'var(--bg-surface)' : active ? 'var(--color-cyan-dim)' : 'rgba(255,255,255,0.04)',
+        color: disabled ? 'var(--text-muted)' : active ? 'var(--color-cyan)' : 'var(--text-secondary)',
+        boxShadow: active ? '0 0 12px var(--color-cyan-glow), inset 0 0 8px rgba(56,189,248,0.05)' : 'none',
         transition: 'all 0.15s',
         whiteSpace: 'nowrap' as const,
         opacity: disabled ? 0.5 : 1,
@@ -218,7 +218,7 @@ function AISummaryCard({ variant, label, text }: {
 }) {
   const isArea    = variant === 'area'
   const bg        = 'rgba(56,189,248,0.06)'
-  const leftColor = 'var(--accent)'
+  const leftColor = 'var(--color-cyan)'
   const sideColor = 'rgba(56,189,248,0.22)'
   const textColor = isArea ? '#7DD3FC' : '#93DBFD'
 
@@ -350,15 +350,15 @@ function SummaryCard({ records, envData, period, sizeUnit = 'cm', fishAliases = 
       borderRadius: 20,
       padding: '24px',
     }}>
-      <p style={{ fontSize: 16, fontWeight: 700, color: '#f0f4ff', marginBottom: 20, fontFamily: 'var(--font-serif)', letterSpacing: '0.04em' }}>
+      <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 20, fontFamily: 'var(--font-serif)', letterSpacing: '0.04em' }}>
         釣果サマリー
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '18px 8px' }}>
         {stats.map(({ Icon, label, value, highlight }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Icon size={24} strokeWidth={1.5} style={{ color: '#38BDF8', flexShrink: 0 }} />
+            <Icon size={24} strokeWidth={1.5} style={{ color: 'var(--color-cyan)', flexShrink: 0 }} />
             <div>
-              <p style={{ fontSize: 10, color: '#8899bb', marginBottom: 3, letterSpacing: '0.05em', fontFamily: "'Inter', system-ui, sans-serif", fontWeight: 400 }}>{label}</p>
+              <p style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 3, letterSpacing: '0.05em', fontFamily: "'Inter', system-ui, sans-serif", fontWeight: 400 }}>{label}</p>
               <p style={{ fontSize: 22, fontWeight: 700, color: highlight ? '#38BDF8' : '#f0f4ff', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
                 {value}
               </p>
@@ -477,7 +477,7 @@ export default function CatchDashboard({
           </div>
         </div>
 
-        <div style={{ height: 1, background: 'var(--border)' }} />
+        <div style={{ height: 1, background: 'var(--border-subtle)' }} />
 
         {/* 期間：今日/昨日/一昨日 + 直近7日/直近30日 + 📅 カレンダー */}
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
@@ -532,16 +532,16 @@ export default function CatchDashboard({
         {/* タブヘッダー */}
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          borderBottom: '1px solid var(--border)', padding: '0 16px', flexWrap: 'wrap', gap: 6,
+          borderBottom: '1px solid var(--border-subtle)', padding: '0 16px', flexWrap: 'wrap', gap: 6,
         }}>
           <div style={{ display: 'flex' }}>
             {TABS.map((t) => (
               <button key={t} onClick={() => setTab(t)} style={{
                 padding: '12px 16px', fontSize: 13,
                 fontWeight: tab === t ? 600 : 400, cursor: 'pointer', border: 'none',
-                borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent',
+                borderBottom: tab === t ? '2px solid var(--color-cyan)' : '2px solid transparent',
                 background: 'transparent',
-                color: tab === t ? '#e2e8f0' : 'var(--text-sub)',
+                color: tab === t ? 'var(--text-primary)' : 'var(--text-secondary)',
                 transition: 'all 0.15s', whiteSpace: 'nowrap',
               }}>
                 {t}
@@ -561,7 +561,7 @@ export default function CatchDashboard({
             <CatchTable records={filtered} sortField={sortField} onSort={setSortField} sizeUnit={sizeUnit} />
             {filtered.length > 0 && (
               <>
-                <div style={{ borderTop: '1px solid var(--border)' }} />
+                <div style={{ borderTop: '1px solid var(--border-subtle)' }} />
                 <CatchCards records={filtered} />
               </>
             )}

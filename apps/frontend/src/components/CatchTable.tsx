@@ -96,7 +96,7 @@ function SortTh({ label, field, active, onSort }: {
       onClick={() => onSort(active ? null : field)}
       style={{
         padding: '10px 12px', textAlign: 'right',
-        color: active ? 'var(--accent)' : 'rgba(255,255,255,0.55)',
+        color: active ? 'var(--color-cyan)' : 'rgba(255,255,255,0.55)',
         fontWeight: 600, fontSize: 11, letterSpacing: '0.04em',
         cursor: 'pointer', whiteSpace: 'nowrap', userSelect: 'none',
         borderBottom: '1px solid rgba(255,255,255,0.07)',
@@ -157,7 +157,7 @@ export default function CatchTable({ records, sortField, onSort, sizeUnit = 'cm'
                 key={r.id}
                 style={{
                   background: rowBg,
-                  borderBottom: '1px solid var(--border)',
+                  borderBottom: '1px solid var(--border-subtle)',
                   borderLeft: borderColor ? `2px solid ${borderColor}` : '2px solid transparent',
                   transition: 'background 0.1s',
                 }}
@@ -166,7 +166,7 @@ export default function CatchTable({ records, sortField, onSort, sizeUnit = 'cm'
               >
                 {/* 船宿（便名・釣り方サブテキスト付き） */}
                 <td style={{ padding: '8px 12px', maxWidth: 0 }}>
-                  <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600, fontSize: 13, color: 'var(--text-main)' }}>
+                  <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600, fontSize: 13, color: 'var(--text-primary)' }}>
                     {isTrophy && <span style={{ marginRight: 3 }}>🏆</span>}
                     {r.shipyard_name ?? '—'}
                   </div>
@@ -188,14 +188,14 @@ export default function CatchTable({ records, sortField, onSort, sizeUnit = 'cm'
                 </td>
 
                 {/* 釣果（複数魚種は改行） */}
-                <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, color: 'var(--accent)', fontVariantNumeric: 'tabular-nums', fontSize: 12, whiteSpace: 'nowrap' }}>
+                <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, color: 'var(--color-cyan)', fontVariantNumeric: 'tabular-nums', fontSize: 12, whiteSpace: 'nowrap' }}>
                   {formatDetailsLines(r.catch_details, r.count_min).map((line, i) => (
                     <div key={i}>{line}</div>
                   ))}
                 </td>
 
                 {/* サイズ（魚種ごとに複数行） */}
-                <td style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--text-sub)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+                <td style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
                   {formatSizeLines(r.catch_details).map((line, i) => (
                     <div key={i}>{line}</div>
                   ))}

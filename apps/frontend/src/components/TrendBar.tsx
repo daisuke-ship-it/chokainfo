@@ -135,7 +135,7 @@ export default function TrendBar({ records, activeFish, onFishClick }: Props) {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: isActive ? '#7DD3FC' : 'var(--text-main)', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: isActive ? '#7DD3FC' : 'var(--text-primary)', whiteSpace: 'nowrap' }}>
                 {fish}
               </span>
               <span style={{ fontSize: 16, color: trend.color, lineHeight: 1, marginLeft: 4 }}>

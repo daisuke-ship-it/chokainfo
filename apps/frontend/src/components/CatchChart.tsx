@@ -187,7 +187,7 @@ export default function CatchChart({ records, fishAliases, envData, period }: Pr
           </linearGradient>
         </defs>
 
-        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" vertical={false} />
 
         <XAxis
           dataKey="date"
@@ -205,7 +205,7 @@ export default function CatchChart({ records, fishAliases, envData, period }: Pr
           allowDecimals={false}
         />
 
-        <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'var(--accent)', strokeWidth: 1, strokeDasharray: '4 2' }} />
+        <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'var(--color-cyan)', strokeWidth: 1, strokeDasharray: '4 2' }} />
 
         {/* レンジ帯: min を透明ベースラインとして積み上げ、band を色付きで表示 */}
         <Area

@@ -99,7 +99,7 @@ export default function CatchCards({ records }: Props) {
             {/* Header: 船宿名 + 日付 */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
               <div style={{ flex: 1, marginRight: 8 }}>
-                <p style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-main)', lineHeight: 1.3, letterSpacing: '0.02em' }}>
+                <p style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.3, letterSpacing: '0.02em' }}>
                   {r.shipyard_name ?? '—'}
                 </p>
               </div>
@@ -128,7 +128,7 @@ export default function CatchCards({ records }: Props) {
             </div>
 
             {/* Divider */}
-            <div style={{ height: 1, background: 'var(--border)', marginBottom: 16 }} />
+            <div style={{ height: 1, background: 'var(--border-subtle)', marginBottom: 16 }} />
 
             {/* Stats */}
             {r.catch_details.length > 0 ? (() => {
@@ -158,7 +158,7 @@ export default function CatchCards({ records }: Props) {
                         {lo === max ? `${max}` : `${lo}〜${max}`}
                       </span>
                       {size_text && (
-                        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-sub)', fontVariantNumeric: 'tabular-nums' }}>
+                        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums' }}>
                           {normalizeSizeText(size_text)}
                         </span>
                       )}
@@ -177,7 +177,7 @@ export default function CatchCards({ records }: Props) {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                   <span style={{ fontSize: 11, color: 'var(--text-muted)', minWidth: 44, letterSpacing: '0.02em' }}>サイズ</span>
-                  <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-sub)', fontVariantNumeric: 'tabular-nums' }}>
+                  <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums' }}>
                     {formatSize(r.size_min_cm, r.size_max_cm)}
                   </span>
                 </div>
