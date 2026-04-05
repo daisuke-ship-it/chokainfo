@@ -28,32 +28,25 @@ export const FISH_ALIASES: Record<Fish, string[]> = {
   'マダイ':   ['マダイ', '真鯛'],
   'ヒラメ':   ['ヒラメ'],
   'シロギス': ['シロギス', 'キス'],
-  // イナダ系（関東）・ワラサ・ブリ成長段階 + 地方名 + ヒラマサ・カンパチ系
   '青物': [
     '青物',
     'イナダ', 'ワラサ', 'ブリ', '鰤',
     'ヒラマサ', '平政',
     'カンパチ', '間八',
-    'ショゴ',                       // カンパチ幼魚（関東）
-    'サンパク',                     // ワラサ別名（関東一部）
-    'ハマチ',                       // ブリ幼魚（関西）
-    'メジロ',                       // ブリ幼魚（関西）
-    'ガンド', 'ガンジ',             // ブリ幼魚（北陸・日本海）
-    'フクラギ',                     // ブリ幼魚（富山）
-    'ツバス',                       // ブリ幼魚（関西）
-    'ヤズ',                         // ブリ幼魚（九州・瀬戸内）
-    'サゴシ',                       // サワラ幼魚（関西）を青物扱いする場合あり
-    'シオ', 'シオゴ',               // カンパチ幼魚（九州）
-    'ネリゴ',                       // カンパチ幼魚（九州）
-    'アオモノ',
+    'ショゴ', 'サンパク',
+    'ハマチ', 'メジロ',
+    'ガンド', 'ガンジ',
+    'フクラギ', 'ツバス',
+    'ヤズ', 'サゴシ',
+    'シオ', 'シオゴ',
+    'ネリゴ', 'アオモノ',
   ],
 }
 
 type Trend = { icon: string; label: string; color: string }
 
-function getTrend(recent: number, prev: number, hasData: boolean): Trend {
-  if (!hasData) return { icon: '—', label: 'データなし', color: 'var(--text-muted)' }
-  if (prev === 0 && recent === 0) return { icon: '—', label: 'データなし', color: 'var(--text-muted)' }
+function getTrend(recent: number, prev: number, hasRecent: boolean): Trend {
+  if (!hasRecent) return { icon: '⏸', label: '出船なし', color: 'var(--text-muted)' }
   if (prev === 0) return { icon: '↑', label: '好調継続', color: '#16A34A' }
   const r = recent / prev
   if (r >= 1.3)  return { icon: '↑',  label: '好調継続',   color: '#16A34A' }
@@ -69,6 +62,18 @@ function avg(records: CatchRecord[]) {
     .filter((v): v is number => v !== null)
   if (vals.length === 0) return 0
   return vals.reduce((a, b) => a + b, 0) / vals.length
+}
+
+function formatDate(dateStr: string): string {
+  const [, m, d] = dateStr.split('-').map(Number)
+  return `${m}/${d}`
+}
+
+function daysDiff(dateStr: string): number {
+  const now = new Date()
+  now.setHours(0, 0, 0, 0)
+  const target = new Date(dateStr + 'T00:00:00')
+  return Math.floor((now.getTime() - target.getTime()) / 86400_000)
 }
 
 type Props = {
@@ -99,6 +104,14 @@ export default function TrendBar({ records, activeFish, onFishClick, hideEmpty }
           (r) => r.fish_name && aliases.some((a) => r.fish_name!.includes(a))
         )
 
+        // 最終出船日
+        const allDates = fishRecs
+          .map((r) => r.date)
+          .filter((d): d is string => d !== null)
+          .sort((a, b) => b.localeCompare(a))
+        const lastDate = allDates[0] ?? null
+        const daysAgo = lastDate ? daysDiff(lastDate) : null
+
         const recentRecs = fishRecs.filter((r) => {
           if (!r.date) return false
           const t = new Date(r.date).getTime()
@@ -112,12 +125,29 @@ export default function TrendBar({ records, activeFish, onFishClick, hideEmpty }
 
         const recentAvg = avg(recentRecs)
         const prevAvg   = avg(prevRecs)
-        const hasData   = recentRecs.length > 0 || prevRecs.length > 0
+        const hasRecent = recentRecs.length > 0
+        const hasAny    = lastDate !== null
 
-        if (hideEmpty && !hasData) return null
+        if (hideEmpty && !hasAny) return null
 
-        const trend     = getTrend(recentAvg, prevAvg, hasData)
+        const trend     = getTrend(recentAvg, prevAvg, hasRecent)
         const isActive  = activeFish === fish
+        const isStale   = !hasRecent  // 7日以内に出船なし
+
+        // 船宿数（直近7日）
+        const shipyardCount = new Set(
+          recentRecs.map((r) => r.shipyard_name).filter(Boolean)
+        ).size
+
+        // サマリーテキスト生成
+        let summaryText: string
+        if (hasRecent) {
+          summaryText = `平均${Math.round(recentAvg)}匹 / ${shipyardCount}船宿`
+        } else if (lastDate && daysAgo !== null) {
+          summaryText = `${formatDate(lastDate)}最終（${daysAgo}日前）`
+        } else {
+          summaryText = 'データなし'
+        }
 
         return (
           <div
@@ -129,18 +159,31 @@ export default function TrendBar({ records, activeFish, onFishClick, hideEmpty }
             style={{
               padding: '10px 8px',
               borderRadius: 'var(--radius-md)',
-              border: isActive ? '1.5px solid rgba(56,189,248,0.60)' : '0.5px solid rgba(180,210,255,0.12)',
-              background: isActive ? 'rgba(56,189,248,0.10)' : 'rgba(8,18,55,0.28)',
+              border: isActive
+                ? '1.5px solid rgba(56,189,248,0.60)'
+                : isStale
+                  ? '0.5px solid rgba(180,210,255,0.06)'
+                  : '0.5px solid rgba(180,210,255,0.12)',
+              background: isActive
+                ? 'rgba(56,189,248,0.10)'
+                : isStale
+                  ? 'rgba(8,18,55,0.15)'
+                  : 'rgba(8,18,55,0.28)',
               cursor: 'pointer',
               textAlign: 'left',
               transition: 'all 0.15s',
               display: 'flex',
               flexDirection: 'column',
               gap: 2,
+              opacity: isStale && !isActive ? 0.6 : 1,
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: isActive ? '#7DD3FC' : 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+              <span style={{
+                fontSize: 12, fontWeight: 700,
+                color: isActive ? '#7DD3FC' : isStale ? 'var(--text-secondary)' : 'var(--text-primary)',
+                whiteSpace: 'nowrap',
+              }}>
                 {fish}
               </span>
               <span style={{ fontSize: 16, color: trend.color, lineHeight: 1, marginLeft: 4 }}>
@@ -151,7 +194,7 @@ export default function TrendBar({ records, activeFish, onFishClick, hideEmpty }
               {trend.label}
             </div>
             <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 1 }}>
-              直近{Math.round(recentAvg * 10) / 10} / 前週{Math.round(prevAvg * 10) / 10}
+              {summaryText}
             </div>
             <Link
               href={`/fish/${FISH_SLUGS[fish]}`}

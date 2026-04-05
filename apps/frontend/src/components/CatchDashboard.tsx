@@ -215,8 +215,8 @@ function FilterLabel({ text }: { text: string }) {
 }
 
 /* ── AI Summary Card ─────────────────────────────────────────── */
-function AISummaryCard({ variant, label, text }: {
-  variant: 'area' | 'fish'; label: string; text: string
+function AISummaryCard({ variant, label, text, staleNote }: {
+  variant: 'area' | 'fish'; label: string; text: string; staleNote?: string | null
 }) {
   const isArea    = variant === 'area'
   const bg        = 'rgba(56,189,248,0.06)'
@@ -243,6 +243,11 @@ function AISummaryCard({ variant, label, text }: {
       <p style={{ fontSize: 13, color: textColor, lineHeight: 1.6, margin: 0 }}>
         {text}
       </p>
+      {staleNote && (
+        <p style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 6, opacity: 0.7 }}>
+          {staleNote}
+        </p>
+      )}
     </div>
   )
 }
@@ -433,6 +438,28 @@ export default function CatchDashboard({
     ? addDatePrefix(areaSummaryRaw, summaryDate)
     : areaSummaryRaw
 
+  // 鮮度チェック — 選択中の魚種の最新出船日を算出
+  const fishLastDate = useMemo(() => {
+    if (!fish) return null
+    const aliases = fishAliases ?? []
+    const dates = areaOnlyFiltered
+      .filter((r) => r.fish_name && aliases.some((a) => r.fish_name!.includes(a)))
+      .map((r) => r.date)
+      .filter((d): d is string => d !== null)
+      .sort((a, b) => b.localeCompare(a))
+    return dates[0] ?? null
+  }, [fish, fishAliases, areaOnlyFiltered])
+
+  const fishStaleDays = useMemo(() => {
+    if (!fishLastDate) return null
+    const now = new Date(); now.setHours(0, 0, 0, 0)
+    return Math.floor((now.getTime() - new Date(fishLastDate + 'T00:00:00').getTime()) / 86400_000)
+  }, [fishLastDate])
+
+  const fishStaleNote = fishStaleDays !== null && fishStaleDays >= 7
+    ? `※ 直近の出船データなし（最終: ${fishLastDate!.slice(5).replace('-', '/')}、${fishStaleDays}日前）`
+    : null
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
@@ -527,7 +554,19 @@ export default function CatchDashboard({
           variant="fish"
           label={`🤖 ${area ?? 'エリア'} × ${fish}の釣況サマリー`}
           text={fishSummary}
+          staleNote={fishStaleNote}
         />
+      )}
+      {/* 魚種選択中でサマリーがなく、出船もない場合 */}
+      {fish && !fishSummary && fishStaleDays !== null && fishStaleDays >= 7 && (
+        <div style={{
+          background: 'rgba(255,255,255,0.03)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: 8, padding: '10px 14px',
+          fontSize: 12, color: 'var(--text-muted)',
+        }}>
+          {fish}は直近{fishStaleDays}日間出船データがありません（最終: {fishLastDate!.slice(5).replace('-', '/')}）
+        </div>
       )}
 
       {/* ── 7. 釣果一覧 / グラフ タブ ───────────────────────────── */}
