@@ -264,4 +264,14 @@ export const fishContents: Record<string, FishContent> = {
     metaTitle: 'カツオ釣果情報 | 最新釣果まとめ - 釣果情報.com',
     metaDescription: '相模湾・外房のカツオ最新釣果。各船宿の釣果を毎日自動更新。AIサマリー付き。',
   },
+  kihada: {
+    name: 'キハダマグロ',
+    slug: 'kihada',
+    season: '夏〜秋（7〜10月が最盛期）',
+    description: '相模湾のキハダマグロは夏の最高峰ターゲット。コマセ・ルアーで10〜40kgの大物を狙う。ヒット後のファイトは圧巻で、釣り上げた感動は格別。刺身・漬け丼が絶品。',
+    points: '相模湾沖・城ヶ島沖・初島沖',
+    methods: 'コマセ・ルアー（キャスティング・ジギング）',
+    metaTitle: 'キハダマグロ釣果情報 | 最新釣果まとめ - 釣果情報.com',
+    metaDescription: '相模湾のキハダマグロ最新釣果。各船宿の釣果を毎日自動更新。AIサマリー付き。',
+  },
 }
