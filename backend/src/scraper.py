@@ -265,11 +265,19 @@ def main():
 
     logger.info(f"対象船宿: {len(active_yards)} 件")
 
-    # ── スクレイピングループ ──────────────────────────────────────────────
+    # ── スクレイピングループ（2パス） ────────────────────────────────────
+    from handlers.claude_handler import ClaudeHandler
+    from utils.fetch import compute_md5, html_to_text
+    from utils.db_v2 import get_latest_html_hash, save_catch_raw, save_catches
+
     total_saved  = 0
     skipped      = 0
     errors       = []
     all_trip_ids: list[int] = []  # 異常値検知用
+
+    # バッチ処理キュー: regex 失敗した ClaudeHandler 船宿を溜める
+    BATCH_SIZE = 3
+    claude_pending: list[dict] = []  # {"yard": dict, "page_text": str, "raw": str, "html_hash": str}
 
     for yard in active_yards:
         yard_id   = yard["id"]
@@ -292,24 +300,132 @@ def main():
         logger.info(f"\n▶ [{yard_id}] {yard_name} [{handler.__class__.__name__}]")
         logger.info(f"  URL: {yard_url}")
 
-        result = handler.run(yard, dry_run=args.dry_run)
+        # ClaudeHandler の場合: regex 優先 → 失敗時はバッチキューに追加
+        if isinstance(handler, ClaudeHandler) and not args.dry_run:
+            try:
+                raw = handler.fetch_raw(yard)
+                html_hash = compute_md5(raw)
 
-        if result["error"]:
-            errors.append(f"{yard_name}: {result['error']}")
-            if not args.dry_run:
-                update_last_scraped_at(db, yard_id, error=result["error"])
-        elif result["skipped"]:
-            skipped += 1
+                # ハッシュチェック
+                prev_hash = get_latest_html_hash(db, yard_id)
+                if prev_hash and prev_hash == html_hash:
+                    logger.info(f"  HTML 変化なし → スキップ")
+                    skipped += 1
+                    time.sleep(INTER_REQUEST_WAIT)
+                    continue
+
+                logger.info(f"  HTML 更新あり (hash: {html_hash[:8]}...)")
+                page_text = html_to_text(raw)
+
+                # 正規表現で試行
+                records = handler._try_regex(page_text, yard_name)
+                if records:
+                    logger.info(f"  正規表現パースで {len(records)} 件抽出 → Claude API スキップ")
+                    # DB に保存
+                    from utils.fetch import html_to_text as _h2t
+                    raw_text = _h2t(raw) if raw.lstrip().startswith("<") else raw
+                    catch_raw_id = save_catch_raw(db, yard_id, raw, html_hash, raw_text, yard_url)
+                    saved = save_catches(
+                        db, records, yard_id, catch_raw_id, yard_url, logger,
+                        species_list=species_list,
+                    )
+                    if saved > 0:
+                        db.table("catch_raw").update({"is_parsed": True}).eq("id", catch_raw_id).execute()
+                    total_saved += saved
+                    update_last_scraped_at(db, yard_id)
+                else:
+                    # バッチキューに追加
+                    logger.info(f"  正規表現パース失敗 → バッチキューに追加")
+                    claude_pending.append({
+                        "yard": yard,
+                        "page_text": page_text,
+                        "raw": raw,
+                        "html_hash": html_hash,
+                    })
+            except Exception as e:
+                logger.error(f"  [{yard_name}] エラー: {e}", exc_info=True)
+                errors.append(f"{yard_name}: {e}")
+                update_last_scraped_at(db, yard_id, error=str(e))
         else:
-            total_saved += result["saved"]
-            if not args.dry_run:
-                update_last_scraped_at(db, yard_id)
-            if args.dry_run and result["sample"]:
-                logger.info(f"  [dry-run] サンプル:")
-                import json
-                logger.info(json.dumps(result["sample"], ensure_ascii=False, indent=2)[:500])
+            # 非 Claude ハンドラー or dry-run: 通常処理
+            result = handler.run(yard, dry_run=args.dry_run)
+
+            if result["error"]:
+                errors.append(f"{yard_name}: {result['error']}")
+                if not args.dry_run:
+                    update_last_scraped_at(db, yard_id, error=result["error"])
+            elif result["skipped"]:
+                skipped += 1
+            else:
+                total_saved += result["saved"]
+                if not args.dry_run:
+                    update_last_scraped_at(db, yard_id)
+                if args.dry_run and result["sample"]:
+                    logger.info(f"  [dry-run] サンプル:")
+                    import json
+                    logger.info(json.dumps(result["sample"], ensure_ascii=False, indent=2)[:500])
 
         time.sleep(INTER_REQUEST_WAIT)
+
+    # ── バッチ Claude API 処理 ────────────────────────────────────────
+    if claude_pending and not args.dry_run:
+        logger.info(f"\n{'='*60}")
+        logger.info(f"バッチ Claude API 処理: {len(claude_pending)} 件")
+        logger.info(f"{'='*60}")
+
+        target_fish = [sp["name"] for sp in species_list if sp.get("name")] or []
+
+        for batch_start in range(0, len(claude_pending), BATCH_SIZE):
+            batch = claude_pending[batch_start:batch_start + BATCH_SIZE]
+            batch_items = [
+                {
+                    "id":        item["yard"]["id"],
+                    "name":      item["yard"].get("name", ""),
+                    "url":       item["yard"].get("url", ""),
+                    "page_text": item["page_text"],
+                }
+                for item in batch
+            ]
+
+            logger.info(f"\n  バッチ {batch_start // BATCH_SIZE + 1}: "
+                        f"{', '.join(i['name'] for i in batch_items)}")
+
+            batch_results = ClaudeHandler.batch_extract(
+                claude_client, batch_items, target_fish, logger
+            )
+
+            # バッチ結果を各船宿に保存
+            for item in batch:
+                yard = item["yard"]
+                yard_id = yard["id"]
+                yard_name = yard.get("name", "")
+                yard_url = yard.get("url", "")
+                records = batch_results.get(yard_id, [])
+
+                if records:
+                    try:
+                        raw_text = html_to_text(item["raw"]) if item["raw"].lstrip().startswith("<") else item["raw"]
+                        catch_raw_id = save_catch_raw(
+                            db, yard_id, item["raw"], item["html_hash"], raw_text, yard_url
+                        )
+                        saved = save_catches(
+                            db, records, yard_id, catch_raw_id, yard_url, logger,
+                            species_list=species_list,
+                        )
+                        if saved > 0:
+                            db.table("catch_raw").update({"is_parsed": True}).eq("id", catch_raw_id).execute()
+                        total_saved += saved
+                        update_last_scraped_at(db, yard_id)
+                        logger.info(f"    [{yard_name}] {saved} 件保存")
+                    except Exception as e:
+                        logger.error(f"    [{yard_name}] 保存エラー: {e}")
+                        errors.append(f"{yard_name}: {e}")
+                        update_last_scraped_at(db, yard_id, error=str(e))
+                else:
+                    logger.info(f"    [{yard_name}] 釣果なし")
+                    update_last_scraped_at(db, yard_id)
+
+            time.sleep(INTER_REQUEST_WAIT)
 
     # ── 異常値検知 ─────────────────────────────────────────────────────
     if not args.dry_run and total_saved > 0:
