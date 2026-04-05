@@ -4,13 +4,15 @@ from .blogphp       import BlogPhpHandler
 from .wordpress     import WordPressHandler
 from .rss           import RssHandler
 from .claude_handler import ClaudeHandler
+from .zekkouchou    import ZekkouchouHandler
 
 HANDLER_MAP = {
-    "gyosan":    GyosanHandler,
-    "blogphp":   BlogPhpHandler,
-    "wordpress": WordPressHandler,
-    "rss":       RssHandler,
-    "claude":    ClaudeHandler,   # fallback / scrape_config 未設定の船宿
+    "gyosan":       GyosanHandler,
+    "blogphp":      BlogPhpHandler,
+    "wordpress":    WordPressHandler,
+    "rss":          RssHandler,
+    "zekkouchou":   ZekkouchouHandler,
+    "claude":       ClaudeHandler,   # fallback / scrape_config 未設定の船宿
 }
 
 def get_handler(scrape_config: dict | None, **kwargs):
