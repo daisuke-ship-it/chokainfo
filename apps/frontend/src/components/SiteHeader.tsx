@@ -56,27 +56,43 @@ function DropdownNav({
   onClose: () => void
 }) {
   return (
-    <div style={{ position: 'relative' }} onMouseEnter={onOpen} onMouseLeave={onClose}>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 3,
-        fontSize: 13,
-        fontWeight: active ? 600 : 400,
-        color: active ? 'var(--color-cyan)' : 'var(--text-secondary)',
-        padding: '5px 10px',
-        borderRadius: 'var(--radius-pill)',
-        background: active ? 'var(--color-cyan-dim)' : 'transparent',
-        cursor: 'default',
-        whiteSpace: 'nowrap',
-        letterSpacing: '0.02em',
-      }}>
+    <div
+      style={{ position: 'relative' }}
+      onMouseEnter={onOpen}
+      onMouseLeave={onClose}
+    >
+      <div
+        onClick={() => (open ? onClose() : onOpen())}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 3,
+          fontSize: 13,
+          fontWeight: active ? 600 : 400,
+          color: active ? 'var(--color-cyan)' : 'var(--text-secondary)',
+          padding: '5px 10px',
+          borderRadius: 'var(--radius-pill)',
+          background: active ? 'var(--color-cyan-dim)' : 'transparent',
+          cursor: 'pointer',
+          whiteSpace: 'nowrap',
+          letterSpacing: '0.02em',
+        }}
+      >
         {label}
         <ChevronDown size={11} strokeWidth={1.5} style={{ opacity: 0.5 }} />
       </div>
       {open && (
-        <div style={{
-          position: 'absolute',
-          top: 'calc(100% + 6px)',
-          left: 0,
+        <>
+          {/* ギャップを埋める透明ブリッジ */}
+          <div style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            width: '100%',
+            height: 8,
+          }} />
+          <div style={{
+            position: 'absolute',
+            top: 'calc(100% + 6px)',
+            left: 0,
           background: 'rgba(8, 18, 38, 0.95)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
@@ -103,7 +119,8 @@ function DropdownNav({
               {item.label}
             </Link>
           ))}
-        </div>
+          </div>
+        </>
       )}
     </div>
   )
