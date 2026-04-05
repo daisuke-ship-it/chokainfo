@@ -154,6 +154,16 @@ export const fishContents: Record<string, FishContent> = {
     metaTitle: 'スミイカ釣果情報 | 最新釣果まとめ - 釣果情報.com',
     metaDescription: '東京湾のスミイカ（コウイカ）最新釣果。各船宿の釣果を毎日自動更新。AIサマリー付き。',
   },
+  aoriika: {
+    name: 'アオリイカ',
+    slug: 'aoriika',
+    season: '春〜初夏・秋（4〜6月、9〜11月）',
+    description: 'イカの王様と呼ばれるアオリイカは甘みと旨味が抜群。ティップランやエギングで狙う。春は大型の親イカ、秋は数釣りの新子シーズン。船からのティップランが近年人気急上昇中。',
+    points: '南房総沖・館山沖・勝山沖・城ヶ島沖',
+    methods: 'ティップラン・エギング・ヤエン',
+    metaTitle: 'アオリイカ釣果情報 | 最新釣果まとめ - 釣果情報.com',
+    metaDescription: 'アオリイカの最新釣果。ティップラン・エギングの船宿釣果を毎日自動更新。AIサマリー付き。',
+  },
   kurodai: {
     name: 'クロダイ',
     slug: 'kurodai',
