@@ -5,6 +5,7 @@ from .wordpress     import WordPressHandler
 from .rss           import RssHandler
 from .claude_handler import ClaudeHandler
 from .zekkouchou    import ZekkouchouHandler
+from .blog_rss      import BlogRssHandler
 
 HANDLER_MAP = {
     "gyosan":       GyosanHandler,
@@ -12,6 +13,7 @@ HANDLER_MAP = {
     "wordpress":    WordPressHandler,
     "rss":          RssHandler,
     "zekkouchou":   ZekkouchouHandler,
+    "blog_rss":     BlogRssHandler,
     "claude":       ClaudeHandler,   # fallback / scrape_config 未設定の船宿
 }
 
