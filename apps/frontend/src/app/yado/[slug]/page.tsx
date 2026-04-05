@@ -1,9 +1,11 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { ExternalLink, Fish, Calendar, Anchor } from 'lucide-react'
+import { ExternalLink, Fish, Calendar, Anchor, BarChart3 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import SiteHeader from '@/components/SiteHeader'
+import YadoCatchChart from '@/components/YadoCatchChart'
+import type { TripData } from '@/components/YadoCatchChart'
 
 // ── 型 ──────────────────────────────────────────────────────────
 type ShipyardRow = {
@@ -220,6 +222,30 @@ export default async function YadoDetailPage({ params }: { params: PageParams })
                   </span>
                 </div>
               ))}
+            </div>
+          </section>
+        )}
+
+        {/* 釣果推移グラフ */}
+        {trips.length > 0 && (
+          <section style={{ marginBottom: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <BarChart3 size={14} style={{ color: 'var(--color-cyan)' }} />
+              <span className="section-label">釣果推移</span>
+            </div>
+            <div className="glass" style={{ padding: '16px 12px 8px', borderRadius: 'var(--radius-md)' }}>
+              <YadoCatchChart
+                trips={trips.map((t): TripData => ({
+                  sail_date: t.sail_date,
+                  boat_name_raw: t.boat_name_raw,
+                  catches: t.catches_v2.map((c) => ({
+                    species_name: c.fish_species?.name ?? c.species_name_raw,
+                    count: c.count,
+                    detail_type: c.detail_type,
+                  })),
+                }))}
+                topSpeciesNames={topSpecies.map((s) => s.name)}
+              />
             </div>
           </section>
         )}
