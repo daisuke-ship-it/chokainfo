@@ -32,6 +32,8 @@ interface Props {
   speciesGroupMap: SpeciesGroupMap
   initialArea?: Area
   initialFish?: Fish | null
+  /** エリアページでは true にしてエリア選択を非表示にする */
+  hideAreaSelector?: boolean
 }
 
 // JST 日付を YYYY-MM-DD で返す（サーバー[UTC]・ブラウザ[JST]両対応）
@@ -372,7 +374,7 @@ function SummaryCard({ records, envData, period, sizeUnit = 'cm', fishAliases = 
 
 /* ── Main ────────────────────────────────────────────────────── */
 export default function CatchDashboard({
-  records, envData, areas, fishSpeciesList, aiSummaries, speciesGroupMap, initialArea, initialFish,
+  records, envData, areas, fishSpeciesList, aiSummaries, speciesGroupMap, initialArea, initialFish, hideAreaSelector,
 }: Props) {
   const [area,      setArea]      = useState<Area | null>(initialArea ?? '東京湾')
   const [fish,      setFish]      = useState<Fish | null>(initialFish !== undefined ? initialFish : 'タチウオ')
@@ -418,12 +420,15 @@ export default function CatchDashboard({
   const sizeUnit: 'cm' | 'kg' = fish === 'トラフグ' ? 'kg' : 'cm'
   const fishAliases: string[] | null = fish ? (speciesGroupMap[fish] ?? FISH_ALIASES[fish]) : null
 
-  // AI summary lookup
+  // AI summary lookup — 常に最新サマリーを表示（期間選択に依存しない）
   const summaryDate    = getPeriodDate(period)
   const areaId         = findAreaId(area, areas)
   const fishId         = findFishId(fish, fishSpeciesList)
+  // 選択期間のサマリーを優先、なければ最新サマリーにフォールバック
   const areaSummaryRaw = lookupSummary(aiSummaries, 'area', areaId, summaryDate)
+    ?? lookupSummary(aiSummaries, 'area', areaId, null)
   const fishSummary    = lookupSummary(aiSummaries, 'fish_species', fishId, summaryDate)
+    ?? lookupSummary(aiSummaries, 'fish_species', fishId, null)
   const areaSummary    = areaSummaryRaw && summaryDate
     ? addDatePrefix(areaSummaryRaw, summaryDate)
     : areaSummaryRaw
@@ -431,33 +436,39 @@ export default function CatchDashboard({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-      {/* ── 1. エリア選択 + Area AI サマリー ─────────────────────── */}
-      <div style={{
-        background: 'rgba(255,255,255,0.05)',
-        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        border: '1px solid rgba(56,189,248,0.35)',
-        borderRadius: 16, padding: '14px 16px',
-        display: 'flex', flexDirection: 'column', gap: 12,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <FilterLabel text="エリア" />
-          <div style={{ display: 'flex', gap: 6 }}>
-            {AREAS.map((a) => (
-              <FilterPill key={a} active={area === a} onClick={() => toggleArea(a)}>
-                {a}
-              </FilterPill>
-            ))}
+      {/* ── 1. エリア選択（トップページのみ表示） ──────────────────── */}
+      {!hideAreaSelector && (
+        <div style={{
+          background: 'rgba(255,255,255,0.05)',
+          backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid rgba(56,189,248,0.35)',
+          borderRadius: 16, padding: '14px 16px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <FilterLabel text="エリア" />
+            <div style={{ display: 'flex', gap: 6 }}>
+              {AREAS.map((a) => (
+                <FilterPill key={a} active={area === a} onClick={() => toggleArea(a)}>
+                  {a}
+                </FilterPill>
+              ))}
+            </div>
           </div>
         </div>
-        {areaSummary && (
-          <AISummaryCard variant="area" label="🤖 エリアの状況" text={areaSummary} />
-        )}
-      </div>
+      )}
 
-      {/* ── 2. 魚種トレンド（2×2） ───────────────────────────────── */}
-      <TrendBar records={areaOnlyFiltered} activeFish={fish} onFishClick={handleFishClick} />
+      {/* ── 2. AIサマリー（常に表示） ─────────────────────────────── */}
+      {areaSummary && (
+        <AISummaryCard variant="area" label={`🤖 ${area ?? 'エリア'}の釣況サマリー`} text={areaSummary} />
+      )}
 
-      {/* ── 3. 魚種・期間フィルター ──────────────────────────────── */}
+      {/* ── 3. 釣果サマリー（天気・潮汐・出船数）─────────────────── */}
+      <SummaryCard records={filtered} envData={envData} period={period} sizeUnit={sizeUnit} fishAliases={fishAliases} />
+
+      {/* ── 4. 魚種トレンド（データありのみ） ─────────────────────── */}
+      <TrendBar records={areaOnlyFiltered} activeFish={fish} onFishClick={handleFishClick} hideEmpty />
+
+      {/* ── 5. 魚種・期間フィルター ──────────────────────────────── */}
       <div style={{
         background: 'rgba(255,255,255,0.05)',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
@@ -510,19 +521,16 @@ export default function CatchDashboard({
         </div>
       </div>
 
-      {/* ── 4. 魚種 AI サマリー ──────────────────────────────────── */}
+      {/* ── 6. 魚種 AI サマリー ──────────────────────────────────── */}
       {fish && fishSummary && (
         <AISummaryCard
           variant="fish"
-          label={`🤖 ${area ?? 'エリア'} × ${fish}の状況`}
+          label={`🤖 ${area ?? 'エリア'} × ${fish}の釣況サマリー`}
           text={fishSummary}
         />
       )}
 
-      {/* ── 5. 釣果サマリーカード ────────────────────────────────── */}
-      <SummaryCard records={filtered} envData={envData} period={period} sizeUnit={sizeUnit} fishAliases={fishAliases} />
-
-      {/* ── 6. 釣果一覧 / グラフ タブ ───────────────────────────── */}
+      {/* ── 7. 釣果一覧 / グラフ タブ ───────────────────────────── */}
       <div style={{
         background: 'rgba(255,255,255,0.05)',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',

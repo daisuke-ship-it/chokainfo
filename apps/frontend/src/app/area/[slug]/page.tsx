@@ -361,6 +361,7 @@ export default async function AreaPage({ params }: { params: PageParams }) {
             speciesGroupMap={speciesGroupMap}
             initialArea={config.name}
             initialFish={null}
+            hideAreaSelector
           />
         )}
       </main>

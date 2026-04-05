@@ -75,9 +75,11 @@ type Props = {
   records: CatchRecord[]
   activeFish: Fish | null
   onFishClick: (f: Fish) => void
+  /** データなしの魚カードを非表示にする */
+  hideEmpty?: boolean
 }
 
-export default function TrendBar({ records, activeFish, onFishClick }: Props) {
+export default function TrendBar({ records, activeFish, onFishClick, hideEmpty }: Props) {
   const todayMs   = new Date().setHours(0, 0, 0, 0)
   const recent7s  = todayMs - 6  * 86400_000
   const prev7s    = todayMs - 13 * 86400_000
@@ -111,6 +113,9 @@ export default function TrendBar({ records, activeFish, onFishClick }: Props) {
         const recentAvg = avg(recentRecs)
         const prevAvg   = avg(prevRecs)
         const hasData   = recentRecs.length > 0 || prevRecs.length > 0
+
+        if (hideEmpty && !hasData) return null
+
         const trend     = getTrend(recentAvg, prevAvg, hasData)
         const isActive  = activeFish === fish
 
