@@ -3,9 +3,9 @@
 import Link from 'next/link'
 import { CatchRecord } from '@/lib/supabase'
 
-export type Fish = 'タチウオ' | 'アジ' | 'シーバス' | 'サワラ' | 'トラフグ' | 'マダイ' | 'ヒラメ' | 'シロギス' | '青物'
+export type Fish = 'タチウオ' | 'アジ' | 'シーバス' | 'サワラ' | 'トラフグ' | 'マダイ' | 'ヒラメ' | 'シロギス' | '青物' | 'イカ' | 'クロダイ' | 'メバル' | 'アマダイ' | 'マゴチ' | 'カワハギ'
 
-export const FISH_LIST: Fish[] = ['タチウオ', 'アジ', 'シーバス', 'サワラ', 'トラフグ', 'マダイ', 'ヒラメ', 'シロギス', '青物']
+export const FISH_LIST: Fish[] = ['タチウオ', 'アジ', 'シーバス', 'サワラ', 'トラフグ', 'マダイ', 'ヒラメ', 'シロギス', '青物', 'イカ', 'クロダイ', 'メバル', 'アマダイ', 'マゴチ', 'カワハギ']
 
 const FISH_SLUGS: Record<Fish, string> = {
   'タチウオ': 'tachiuo',
@@ -17,6 +17,12 @@ const FISH_SLUGS: Record<Fish, string> = {
   'ヒラメ':   'hirame',
   'シロギス': 'shirogisu',
   '青物':     'aomono',
+  'イカ':     'ika',
+  'クロダイ': 'kurodai',
+  'メバル':   'mebaru',
+  'アマダイ': 'amadai',
+  'マゴチ':   'magochi',
+  'カワハギ': 'kawahagi',
 }
 
 export const FISH_ALIASES: Record<Fish, string[]> = {
@@ -41,6 +47,15 @@ export const FISH_ALIASES: Record<Fish, string[]> = {
     'シオ', 'シオゴ',
     'ネリゴ', 'アオモノ',
   ],
+  'イカ': [
+    'イカ', 'スルメイカ', 'ヤリイカ', 'マルイカ', 'スミイカ',
+    'アオリイカ', 'ケンサキイカ', 'ムギイカ',
+  ],
+  'クロダイ': ['クロダイ', 'チヌ', '黒鯛'],
+  'メバル':   ['メバル'],
+  'アマダイ': ['アマダイ', '甘鯛'],
+  'マゴチ':   ['マゴチ'],
+  'カワハギ': ['カワハギ'],
 }
 
 type Trend = { icon: string; label: string; color: string }
