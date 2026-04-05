@@ -8,7 +8,7 @@ import { FishContent } from '@/lib/fishContent'
 import CatchTable, { SortField } from './CatchTable'
 import CatchChart from './CatchChart'
 
-type Area = '東京湾' | '相模湾'
+type Area = '東京湾' | '相模湾' | '外房' | '南房'
 
 const METHOD_ORDER: Record<string, number> = {
   'ルアー': 0, 'テンヤ': 1, 'エサ': 2,
@@ -269,12 +269,11 @@ export default function FishDashboard({ records, envData, aiSummaries, fishId, c
         }}>
           <p style={{ fontSize: 11, fontWeight: 700, color: '#fff', letterSpacing: '0.06em', marginBottom: 10 }}>エリア</p>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            <FilterPill active={area === '東京湾'} onClick={() => setArea((p) => (p === '東京湾' ? null : '東京湾'))}>
-              東京湾
-            </FilterPill>
-            <FilterPill active={area === '相模湾'} onClick={() => setArea((p) => (p === '相模湾' ? null : '相模湾'))}>
-              相模湾
-            </FilterPill>
+            {(['東京湾', '相模湾', '外房', '南房'] as const).map((a) => (
+              <FilterPill key={a} active={area === a} onClick={() => setArea((p) => (p === a ? null : a))}>
+                {a}
+              </FilterPill>
+            ))}
           </div>
         </div>
         {/* 魚種カード（表示のみ） */}

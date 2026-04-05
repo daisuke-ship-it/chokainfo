@@ -1,8 +1,9 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { MapPin, TrendingUp } from 'lucide-react'
 import { supabase, CatchRecord } from '@/lib/supabase'
-import { fishContents } from '@/lib/fishContent'
+import { fishContents, fishMetaTitle, fishMetaDescription } from '@/lib/fishContent'
 import { EnvData, EnvDataMap, AISummaryRecord, AreaRecord } from '@/app/page'
 import FishDashboard from '@/components/FishDashboard'
 import SiteHeader from '@/components/SiteHeader'
@@ -161,12 +162,15 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
   const today = new Date().toISOString().slice(0, 10)
   const ogImage = `${BASE_URL}/api/og?area=${encodeURIComponent('東京湾')}&fish=${encodeURIComponent(content.name)}&date=${today}`
 
+  const title = fishMetaTitle(content)
+  const description = fishMetaDescription(content)
+
   return {
-    title: content.metaTitle,
-    description: content.metaDescription,
+    title,
+    description,
     openGraph: {
-      title: content.metaTitle,
-      description: content.metaDescription,
+      title,
+      description,
       siteName: '釣果情報.com',
       type: 'website',
       locale: 'ja_JP',
@@ -174,8 +178,8 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
     },
     twitter: {
       card: 'summary_large_image',
-      title: content.metaTitle,
-      description: content.metaDescription,
+      title,
+      description,
       images: [ogImage],
     },
   }
@@ -206,8 +210,49 @@ export default async function FishPage({ params }: { params: PageParams }) {
     timeZone: 'Asia/Tokyo',
   })
 
+  // ── エリア別ランキング（直近7日） ───
+  const cutoff7 = new Date()
+  cutoff7.setDate(cutoff7.getDate() - 7)
+  const cutoff7Str = cutoff7.toISOString().slice(0, 10)
+
+  const areaStats = new Map<string, { trips: number; totalCount: number }>()
+  for (const r of records) {
+    if (!r.date || r.date < cutoff7Str || !r.shipyard_area) continue
+    const counts = r.catch_details
+      .filter((d) => d.count !== null)
+      .map((d) => d.count!)
+    if (counts.length === 0) continue
+    const area = r.shipyard_area
+    const cur = areaStats.get(area) ?? { trips: 0, totalCount: 0 }
+    cur.trips += 1
+    cur.totalCount += Math.max(...counts)
+    areaStats.set(area, cur)
+  }
+
+  const areaRanking = [...areaStats.entries()]
+    .map(([area, v]) => ({ area, trips: v.trips, avg: Math.round(v.totalCount / v.trips * 10) / 10 }))
+    .sort((a, b) => b.trips - a.trips || b.avg - a.avg)
+
+  const AREA_SLUG_MAP: Record<string, string> = {
+    '東京湾': 'tokyo', '相模湾': 'sagami', '外房': 'sotobo', '南房': 'minamibo',
+  }
+
   return (
     <div style={{ minHeight: '100vh' }}>
+
+      {/* ── 構造化データ ──────────────────────────────────────── */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'トップ', item: 'https://www.chokainfo.com/' },
+            { '@type': 'ListItem', position: 2, name: '魚種', item: 'https://www.chokainfo.com/fish/tachiuo' },
+            { '@type': 'ListItem', position: 3, name: content.name, item: `https://www.chokainfo.com/fish/${slug}` },
+          ],
+        }) }}
+      />
 
       {/* ── Header ─────────────────────────────────────────── */}
       <SiteHeader updatedAt={nowStr} subtitle={content.name} />
@@ -265,8 +310,51 @@ export default async function FishPage({ params }: { params: PageParams }) {
         </div>
       </section>
 
+      {/* ── エリア別ランキング（SEO + 即表示） ────────────── */}
+      {areaRanking.length > 0 && (
+        <section className="page-container" style={{ paddingTop: 16, paddingBottom: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <TrendingUp size={14} style={{ color: 'var(--color-cyan)' }} />
+            <span className="section-label">{content.name}が釣れているエリア</span>
+            <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>直近7日</span>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {areaRanking.map((ar, i) => {
+              const areaSlug = AREA_SLUG_MAP[ar.area]
+              return (
+                <Link
+                  key={ar.area}
+                  href={areaSlug ? `/area/${areaSlug}` : '#'}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '8px 16px', borderRadius: 12,
+                    border: '1px solid var(--border-default)',
+                    background: i === 0 ? 'rgba(56,189,248,0.08)' : 'var(--bg-card)',
+                    textDecoration: 'none',
+                  }}
+                >
+                  <span style={{
+                    fontSize: 11, fontWeight: 700,
+                    color: i === 0 ? 'var(--color-cyan)' : 'var(--text-muted)',
+                    minWidth: 16,
+                  }}>
+                    {i + 1}
+                  </span>
+                  <MapPin size={13} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
+                  <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500 }}>{ar.area}</span>
+                  <span className="data-value" style={{ fontSize: 13, color: 'var(--color-cyan)', fontWeight: 600 }}>
+                    {ar.avg}
+                  </span>
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{ar.trips}件</span>
+                </Link>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
       {/* ── Main ─────────────────────────────────────────── */}
-      <main className="page-container" style={{ paddingTop: 8, paddingBottom: 100 }}>
+      <main className="page-container" style={{ paddingTop: 16, paddingBottom: 100 }}>
         <FishDashboard
           records={records}
           envData={envData}
@@ -276,6 +364,30 @@ export default async function FishPage({ params }: { params: PageParams }) {
           content={content}
         />
       </main>
+
+      {/* ── 関連リンク ──────────────────────────────────────── */}
+      <section className="page-container" style={{ paddingBottom: 32 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <MapPin size={14} style={{ color: 'var(--color-cyan)' }} />
+          <span className="section-label">エリア別釣果を見る</span>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {Object.entries(AREA_SLUG_MAP).map(([areaName, areaSlug]) => (
+            <Link
+              key={areaSlug}
+              href={`/area/${areaSlug}`}
+              style={{
+                padding: '8px 18px', borderRadius: 100, fontSize: 13,
+                border: '1px solid var(--border-default)',
+                background: 'var(--bg-card)', color: 'var(--text-secondary)',
+                textDecoration: 'none',
+              }}
+            >
+              {areaName}
+            </Link>
+          ))}
+        </div>
+      </section>
 
       {/* ── Footer ───────────────────────────────────────── */}
       <footer style={{ borderTop: '1px solid var(--border-subtle)', padding: '28px 0' }}>

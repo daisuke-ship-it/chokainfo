@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { TrendingUp, Fish } from 'lucide-react'
 import { supabase, CatchRecord } from '@/lib/supabase'
 import { EnvDataMap, AISummaryRecord, AreaRecord, FishRecord, SpeciesGroupMap } from '@/app/page'
 import CatchDashboard from '@/components/CatchDashboard'
@@ -184,9 +185,10 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
   if (!config) return {}
 
   const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.chokainfo.com'
-  const today = new Date().toISOString().slice(0, 10)
+  const now = new Date()
+  const today = now.toISOString().slice(0, 10)
   const ogImage = `${BASE_URL}/api/og?area=${encodeURIComponent(config.name)}&date=${today}`
-  const title = `${config.name}の船釣り釣果情報 | 釣果情報.com`
+  const title = `${config.name}の船釣り釣果情報【${now.getFullYear()}年${now.getMonth() + 1}月最新】| 釣果情報.com`
 
   return {
     title,
@@ -232,8 +234,48 @@ export default async function AreaPage({ params }: { params: PageParams }) {
     timeZone: 'Asia/Tokyo',
   })
 
+  // ── 直近7日の釣れている魚ランキング（サーバーサイド算出） ───
+  const cutoff7 = new Date()
+  cutoff7.setDate(cutoff7.getDate() - 7)
+  const cutoff7Str = cutoff7.toISOString().slice(0, 10)
+
+  const areaRecords = records.filter((r) => r.shipyard_area === config.name)
+  const speciesStats = new Map<string, { trips: number; totalCount: number }>()
+  for (const r of areaRecords) {
+    if (!r.date || r.date < cutoff7Str) continue
+    const seen = new Set<string>()
+    for (const d of r.catch_details) {
+      if (!d.species_name || d.count === null) continue
+      const name = d.species_name
+      if (seen.has(name)) continue
+      seen.add(name)
+      const cur = speciesStats.get(name) ?? { trips: 0, totalCount: 0 }
+      cur.trips += 1
+      cur.totalCount += d.count
+      speciesStats.set(name, cur)
+    }
+  }
+
+  const topFish = [...speciesStats.entries()]
+    .map(([name, v]) => ({ name, trips: v.trips, avg: Math.round(v.totalCount / v.trips) }))
+    .sort((a, b) => b.trips - a.trips || b.avg - a.avg)
+    .slice(0, 6)
+
   return (
     <div style={{ minHeight: '100vh' }}>
+
+      {/* ── 構造化データ ──────────────────────────────────────── */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'トップ', item: 'https://www.chokainfo.com/' },
+            { '@type': 'ListItem', position: 2, name: config.name, item: `https://www.chokainfo.com/area/${slug}` },
+          ],
+        }) }}
+      />
 
       {/* ── Header ─────────────────────────────────────────────── */}
       <SiteHeader updatedAt={nowStr} subtitle={config.name} />
@@ -263,8 +305,43 @@ export default async function AreaPage({ params }: { params: PageParams }) {
         </div>
       </section>
 
+      {/* ── 今釣れている魚ランキング（SEO + 即表示） ───────────── */}
+      {topFish.length > 0 && (
+        <section className="page-container" style={{ paddingTop: 16, paddingBottom: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <TrendingUp size={14} style={{ color: 'var(--color-cyan)' }} />
+            <span className="section-label">今{config.name}で釣れている魚</span>
+            <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>直近7日</span>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {topFish.map((sp, i) => (
+              <div key={sp.name} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '8px 16px', borderRadius: 12,
+                border: '1px solid var(--border-default)',
+                background: i === 0 ? 'rgba(56,189,248,0.08)' : 'var(--bg-card)',
+              }}>
+                <span style={{
+                  fontSize: 11, fontWeight: 700,
+                  color: i === 0 ? 'var(--color-cyan)' : 'var(--text-muted)',
+                  minWidth: 16,
+                }}>
+                  {i + 1}
+                </span>
+                <Fish size={13} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500 }}>{sp.name}</span>
+                <span className="data-value" style={{ fontSize: 13, color: 'var(--color-cyan)', fontWeight: 600 }}>
+                  {sp.avg}
+                </span>
+                <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{sp.trips}件</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* ── Main ─────────────────────────────────────────────────── */}
-      <main className="page-container" style={{ paddingTop: 8, paddingBottom: 100 }}>
+      <main className="page-container" style={{ paddingTop: 16, paddingBottom: 100 }}>
         {records.length === 0 ? (
           <div style={{
             textAlign: 'center', padding: '60px 20px',
@@ -287,6 +364,35 @@ export default async function AreaPage({ params }: { params: PageParams }) {
           />
         )}
       </main>
+
+      {/* ── 魚種別釣果リンク ─────────────────────────────────── */}
+      <section className="page-container" style={{ paddingBottom: 32 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <Fish size={14} style={{ color: 'var(--color-cyan)' }} />
+          <span className="section-label">魚種別釣果を見る</span>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {[
+            { name: 'タチウオ', slug: 'tachiuo' }, { name: 'アジ', slug: 'aji' },
+            { name: 'シーバス', slug: 'seabass' }, { name: 'サワラ', slug: 'sawara' },
+            { name: 'トラフグ', slug: 'torafugu' }, { name: 'マダイ', slug: 'madai' },
+            { name: 'ヒラメ', slug: 'hirame' }, { name: 'シロギス', slug: 'shirogisu' },
+          ].map((f) => (
+            <Link
+              key={f.slug}
+              href={`/fish/${f.slug}`}
+              style={{
+                padding: '8px 18px', borderRadius: 100, fontSize: 13,
+                border: '1px solid var(--border-default)',
+                background: 'var(--bg-card)', color: 'var(--text-secondary)',
+                textDecoration: 'none',
+              }}
+            >
+              {f.name}
+            </Link>
+          ))}
+        </div>
+      </section>
 
       {/* ── Footer ─────────────────────────────────────────────── */}
       <footer style={{ borderTop: '1px solid var(--border-subtle)', padding: '28px 0' }}>

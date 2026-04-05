@@ -77,8 +77,10 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
   const shipyard = await getShipyard(id)
   if (!shipyard) return {}
 
-  const title = `${shipyard.name} 釣果情報 | 釣果情報.com`
-  const description = `${shipyard.name}（${shipyard.areas?.name ?? ''}${shipyard.ports?.name ? ` ${shipyard.ports.name}` : ''}）の最新釣果情報。毎日自動更新。`
+  const now = new Date()
+  const ym = `${now.getFullYear()}年${now.getMonth() + 1}月`
+  const title = `${shipyard.name}の釣果情報【${ym}最新】| 釣果情報.com`
+  const description = `${ym}の${shipyard.name}（${shipyard.areas?.name ?? ''}${shipyard.ports?.name ? ` ${shipyard.ports.name}` : ''}）最新釣果情報。毎日自動更新。`
 
   return {
     title,

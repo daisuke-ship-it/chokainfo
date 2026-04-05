@@ -18,6 +18,21 @@ export type FishContent = {
   metaDescription: string
 }
 
+/** 動的にタイトルに年月を含める（SEO用） */
+export function fishMetaTitle(content: FishContent): string {
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = now.getMonth() + 1
+  return `${content.name}の釣果情報【${y}年${m}月最新】| 釣果情報.com`
+}
+
+export function fishMetaDescription(content: FishContent): string {
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = now.getMonth() + 1
+  return `${y}年${m}月の${content.name}最新釣果。東京湾・相模湾・外房・南房の船宿釣果を毎日自動更新。AIサマリー付き。`
+}
+
 export const fishContents: Record<string, FishContent> = {
   tachiuo: {
     name: 'タチウオ',
