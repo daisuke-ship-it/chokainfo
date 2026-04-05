@@ -155,24 +155,27 @@ function findFishId(fish: Fish | null, fishSpeciesList: FishRecord[]): number | 
   return fishSpeciesList.find((f) => aliases.some((a) => f.name === a))?.id ?? null
 }
 
+type SummaryResult = { text: string; date: string | null; isFallback: boolean } | null
+
 function lookupSummary(
   aiSummaries: AISummaryRecord[],
   type: string,
   targetId: number | null,
   targetDate: string | null,
-): string | null {
+): SummaryResult {
   if (targetId === null) return null
   const candidates = aiSummaries.filter(
     (s) => s.summary_type === type && s.target_id === targetId
   )
   if (candidates.length === 0) return null
-  // targetDate が指定されている場合はその日付を優先、なければ最新日のサマリーを返す
+  // targetDate が指定されている場合はその日付を優先
   if (targetDate !== null) {
     const exact = candidates.find((s) => s.target_date === targetDate)
-    if (exact) return exact.summary_text
+    if (exact) return { text: exact.summary_text, date: exact.target_date, isFallback: false }
   }
-  // フォールバック: 最新日のサマリー（aiSummaries は target_date 降順で取得済み）
-  return candidates[0].summary_text
+  // フォールバック: 最新日のサマリー
+  const latest = candidates[0]
+  return { text: latest.summary_text, date: latest.target_date, isFallback: true }
 }
 
 /* ── Sub-components ──────────────────────────────────────────── */
@@ -215,14 +218,19 @@ function FilterLabel({ text }: { text: string }) {
 }
 
 /* ── AI Summary Card ─────────────────────────────────────────── */
-function AISummaryCard({ variant, label, text, staleNote }: {
-  variant: 'area' | 'fish'; label: string; text: string; staleNote?: string | null
+function AISummaryCard({ variant, label, text, staleNote, summaryDate }: {
+  variant: 'area' | 'fish'; label: string; text: string; staleNote?: string | null; summaryDate?: string | null
 }) {
   const isArea    = variant === 'area'
   const bg        = 'rgba(56,189,248,0.06)'
   const leftColor = 'var(--color-cyan)'
   const sideColor = 'rgba(56,189,248,0.22)'
   const textColor = isArea ? '#7DD3FC' : '#93DBFD'
+
+  // 日付ラベル生成（例: "4/4"）
+  const dateLabel = summaryDate
+    ? (() => { const [, m, d] = summaryDate.split('-').map(Number); return `${m}/${d}` })()
+    : null
 
   return (
     <div style={{
@@ -234,12 +242,25 @@ function AISummaryCard({ variant, label, text, staleNote }: {
       borderRadius: 8,
       padding: '10px 14px',
     }}>
-      <p style={{
-        fontSize: 10, fontWeight: 700, color: textColor,
-        textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5, opacity: 0.7,
-      }}>
-        {label}
-      </p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+        <p style={{
+          fontSize: 10, fontWeight: 700, color: textColor,
+          textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0, opacity: 0.7,
+        }}>
+          {label}
+        </p>
+        {dateLabel && (
+          <span style={{
+            fontSize: 10, fontWeight: 600,
+            color: 'var(--text-muted)',
+            background: 'rgba(255,255,255,0.06)',
+            padding: '2px 8px',
+            borderRadius: 'var(--radius-pill)',
+          }}>
+            {dateLabel}の釣況
+          </span>
+        )}
+      </div>
       <p style={{ fontSize: 13, color: textColor, lineHeight: 1.6, margin: 0 }}>
         {text}
       </p>
@@ -430,13 +451,13 @@ export default function CatchDashboard({
   const areaId         = findAreaId(area, areas)
   const fishId         = findFishId(fish, fishSpeciesList)
   // 選択期間のサマリーを優先、なければ最新サマリーにフォールバック
-  const areaSummaryRaw = lookupSummary(aiSummaries, 'area', areaId, summaryDate)
+  const areaSummaryResult = lookupSummary(aiSummaries, 'area', areaId, summaryDate)
     ?? lookupSummary(aiSummaries, 'area', areaId, null)
-  const fishSummary    = lookupSummary(aiSummaries, 'fish_species', fishId, summaryDate)
+  const fishSummaryResult = lookupSummary(aiSummaries, 'fish_species', fishId, summaryDate)
     ?? lookupSummary(aiSummaries, 'fish_species', fishId, null)
-  const areaSummary    = areaSummaryRaw && summaryDate
-    ? addDatePrefix(areaSummaryRaw, summaryDate)
-    : areaSummaryRaw
+  const areaSummaryText = areaSummaryResult
+    ? (summaryDate ? addDatePrefix(areaSummaryResult.text, summaryDate) : areaSummaryResult.text)
+    : null
 
   // 鮮度チェック — 選択中の魚種の最新出船日を算出
   const fishLastDate = useMemo(() => {
@@ -485,8 +506,13 @@ export default function CatchDashboard({
       )}
 
       {/* ── 2. AIサマリー（常に表示） ─────────────────────────────── */}
-      {areaSummary && (
-        <AISummaryCard variant="area" label={`🤖 ${area ?? 'エリア'}の釣況サマリー`} text={areaSummary} />
+      {areaSummaryResult && areaSummaryText && (
+        <AISummaryCard
+          variant="area"
+          label={`🤖 ${area ?? 'エリア'}の釣況サマリー`}
+          text={areaSummaryText}
+          summaryDate={areaSummaryResult.date}
+        />
       )}
 
       {/* ── 3. 釣果サマリー（天気・潮汐・出船数）─────────────────── */}
@@ -549,16 +575,17 @@ export default function CatchDashboard({
       </div>
 
       {/* ── 6. 魚種 AI サマリー ──────────────────────────────────── */}
-      {fish && fishSummary && (
+      {fish && fishSummaryResult && (
         <AISummaryCard
           variant="fish"
           label={`🤖 ${area ?? 'エリア'} × ${fish}の釣況サマリー`}
-          text={fishSummary}
+          text={fishSummaryResult.text}
           staleNote={fishStaleNote}
+          summaryDate={fishSummaryResult.date}
         />
       )}
       {/* 魚種選択中でサマリーがなく、出船もない場合 */}
-      {fish && !fishSummary && fishStaleDays !== null && fishStaleDays >= 7 && (
+      {fish && !fishSummaryResult && fishStaleDays !== null && fishStaleDays >= 7 && (
         <div style={{
           background: 'rgba(255,255,255,0.03)',
           border: '1px solid var(--border-subtle)',

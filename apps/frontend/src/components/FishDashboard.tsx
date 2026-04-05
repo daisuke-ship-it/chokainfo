@@ -106,7 +106,11 @@ function FilterLabel({ text }: { text: string }) {
   )
 }
 
-function AISummaryCard({ text, fishName, staleNote }: { text: string; fishName: string; staleNote?: string | null }) {
+function AISummaryCard({ text, fishName, staleNote, summaryDate }: { text: string; fishName: string; staleNote?: string | null; summaryDate?: string | null }) {
+  const dateLabel = summaryDate
+    ? (() => { const [, m, d] = summaryDate.split('-').map(Number); return `${m}/${d}` })()
+    : null
+
   return (
     <div style={{
       background: 'rgba(56,189,248,0.06)',
@@ -116,9 +120,22 @@ function AISummaryCard({ text, fishName, staleNote }: { text: string; fishName: 
       borderBottom: '1px solid rgba(56,189,248,0.22)',
       borderRadius: 8, padding: '10px 14px',
     }}>
-      <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5, opacity: 0.8 }}>
-        🤖 {fishName}の釣況サマリー
-      </p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+        <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0, opacity: 0.8 }}>
+          🤖 {fishName}の釣況サマリー
+        </p>
+        {dateLabel && (
+          <span style={{
+            fontSize: 10, fontWeight: 600,
+            color: 'var(--text-muted)',
+            background: 'rgba(255,255,255,0.06)',
+            padding: '2px 8px',
+            borderRadius: 'var(--radius-pill)',
+          }}>
+            {dateLabel}の釣況
+          </span>
+        )}
+      </div>
       <p style={{ fontSize: 13, color: '#a0efec', lineHeight: 1.6, margin: 0 }}>
         {text}
       </p>
@@ -255,7 +272,7 @@ export default function FishDashboard({ records, envData, aiSummaries, fishId, c
   }, [areaFiltered, period, sortField])
 
   // AI サマリー — 選択期間を優先、なければ最新にフォールバック
-  const summaryText = useMemo(() => {
+  const summaryResult = useMemo(() => {
     if (!fishId) return null
     const candidates = aiSummaries.filter(
       (s) => s.summary_type === 'fish_species' && s.target_id === fishId
@@ -263,9 +280,10 @@ export default function FishDashboard({ records, envData, aiSummaries, fishId, c
     if (candidates.length === 0) return null
     if (period !== '直近7日' && period !== '直近30日') {
       const exact = candidates.find((s) => s.target_date === period)
-      if (exact) return exact.summary_text
+      if (exact) return { text: exact.summary_text, date: exact.target_date }
     }
-    return candidates[0]?.summary_text ?? null
+    const latest = candidates[0]
+    return latest ? { text: latest.summary_text, date: latest.target_date } : null
   }, [aiSummaries, fishId, period])
 
   // 鮮度チェック — 最新出船日
@@ -352,10 +370,10 @@ export default function FishDashboard({ records, envData, aiSummaries, fishId, c
       </div>
 
       {/* ── AI サマリー ──────────────────────────────────── */}
-      {summaryText && (
-        <AISummaryCard text={summaryText} fishName={content.name} staleNote={staleNote} />
+      {summaryResult && (
+        <AISummaryCard text={summaryResult.text} fishName={content.name} staleNote={staleNote} summaryDate={summaryResult.date} />
       )}
-      {!summaryText && staleDays !== null && staleDays >= 7 && (
+      {!summaryResult && staleDays !== null && staleDays >= 7 && (
         <div style={{
           background: 'rgba(255,255,255,0.03)',
           border: '1px solid var(--border-subtle)',
