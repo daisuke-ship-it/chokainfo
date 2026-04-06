@@ -3,38 +3,11 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { CatchRecord } from '@/lib/supabase'
+import { Fish, FISH_LIST, FISH_SLUGS } from '@/lib/constants'
 
-export type Fish = 'タチウオ' | 'アジ' | 'シーバス' | 'サワラ' | 'トラフグ' | 'マダイ' | 'ヒラメ' | 'シロギス' | '青物' | 'ヤリイカ' | 'スルメイカ' | 'マルイカ' | 'スミイカ' | 'アオリイカ' | 'クロダイ' | 'メバル' | 'アマダイ' | 'マゴチ' | 'カワハギ' | 'イサキ' | 'カサゴ' | 'マダコ' | 'ショウサイフグ' | 'カツオ' | 'キハダマグロ'
-
-export const FISH_LIST: Fish[] = ['タチウオ', 'アジ', 'シーバス', 'サワラ', 'トラフグ', 'マダイ', 'ヒラメ', 'シロギス', '青物', 'ヤリイカ', 'スルメイカ', 'マルイカ', 'スミイカ', 'アオリイカ', 'クロダイ', 'メバル', 'アマダイ', 'マゴチ', 'カワハギ', 'イサキ', 'カサゴ', 'マダコ', 'ショウサイフグ', 'カツオ', 'キハダマグロ']
-
-export const FISH_SLUGS: Record<Fish, string> = {
-  'タチウオ': 'tachiuo',
-  'アジ':     'aji',
-  'シーバス': 'seabass',
-  'サワラ':   'sawara',
-  'トラフグ': 'torafugu',
-  'マダイ':   'madai',
-  'ヒラメ':   'hirame',
-  'シロギス': 'shirogisu',
-  '青物':     'aomono',
-  'ヤリイカ': 'yariika',
-  'スルメイカ': 'surumeika',
-  'マルイカ': 'maruika',
-  'スミイカ': 'sumiika',
-  'アオリイカ': 'aoriika',
-  'クロダイ': 'kurodai',
-  'メバル':   'mebaru',
-  'アマダイ': 'amadai',
-  'マゴチ':   'magochi',
-  'カワハギ': 'kawahagi',
-  'イサキ':   'isaki',
-  'カサゴ':   'kasago',
-  'マダコ':   'madako',
-  'ショウサイフグ': 'shousaifugu',
-  'カツオ':   'katsuo',
-  'キハダマグロ': 'kihada',
-}
+// Re-export for backward compatibility
+export type { Fish }
+export { FISH_LIST, FISH_SLUGS }
 
 export const FISH_ALIASES: Record<Fish, string[]> = {
   'タチウオ': ['タチウオ', '太刀魚'],

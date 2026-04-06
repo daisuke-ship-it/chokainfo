@@ -1,8 +1,39 @@
 // ── 共有定数 ──────────────────────────────────────────────────
-// エリア・魚種のスラッグマッピング。SiteHeader / page.tsx / TrendBar で共用。
+// エリア・魚種の定義。Server/Client 両方から安全に import 可能。
 
-import { Fish, FISH_LIST, FISH_SLUGS } from '@/components/TrendBar'
+export type Fish = 'タチウオ' | 'アジ' | 'シーバス' | 'サワラ' | 'トラフグ' | 'マダイ' | 'ヒラメ' | 'シロギス' | '青物' | 'ヤリイカ' | 'スルメイカ' | 'マルイカ' | 'スミイカ' | 'アオリイカ' | 'クロダイ' | 'メバル' | 'アマダイ' | 'マゴチ' | 'カワハギ' | 'イサキ' | 'カサゴ' | 'マダコ' | 'ショウサイフグ' | 'カツオ' | 'キハダマグロ'
 
+export const FISH_LIST: Fish[] = ['タチウオ', 'アジ', 'シーバス', 'サワラ', 'トラフグ', 'マダイ', 'ヒラメ', 'シロギス', '青物', 'ヤリイカ', 'スルメイカ', 'マルイカ', 'スミイカ', 'アオリイカ', 'クロダイ', 'メバル', 'アマダイ', 'マゴチ', 'カワハギ', 'イサキ', 'カサゴ', 'マダコ', 'ショウサイフグ', 'カツオ', 'キハダマグロ']
+
+export const FISH_SLUGS: Record<Fish, string> = {
+  'タチウオ': 'tachiuo',
+  'アジ':     'aji',
+  'シーバス': 'seabass',
+  'サワラ':   'sawara',
+  'トラフグ': 'torafugu',
+  'マダイ':   'madai',
+  'ヒラメ':   'hirame',
+  'シロギス': 'shirogisu',
+  '青物':     'aomono',
+  'ヤリイカ': 'yariika',
+  'スルメイカ': 'surumeika',
+  'マルイカ': 'maruika',
+  'スミイカ': 'sumiika',
+  'アオリイカ': 'aoriika',
+  'クロダイ': 'kurodai',
+  'メバル':   'mebaru',
+  'アマダイ': 'amadai',
+  'マゴチ':   'magochi',
+  'カワハギ': 'kawahagi',
+  'イサキ':   'isaki',
+  'カサゴ':   'kasago',
+  'マダコ':   'madako',
+  'ショウサイフグ': 'shousaifugu',
+  'カツオ':   'katsuo',
+  'キハダマグロ': 'kihada',
+}
+
+// ── エリア定義 ──────────────────────────────────────────────────
 export type AreaSlug = 'tokyo' | 'sagami' | 'sotobo' | 'minamibo'
 
 export const AREA_CONFIG: { slug: AreaSlug; name: string; description: string }[] = [
@@ -29,7 +60,3 @@ export const NAV_FISH = FISH_LIST.map((f) => ({
   label: f,
   href: `/fish/${FISH_SLUGS[f]}`,
 }))
-
-// Re-export for convenience
-export { FISH_LIST, FISH_SLUGS }
-export type { Fish }
