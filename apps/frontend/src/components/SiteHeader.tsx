@@ -4,24 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
-
-const AREAS = [
-  { label: '東京湾', href: '/area/tokyo' },
-  { label: '相模湾', href: '/area/sagami' },
-  { label: '外房',   href: '/area/sotobo' },
-  { label: '南房',   href: '/area/minamibo' },
-]
-
-const FISH = [
-  { label: 'タチウオ', href: '/fish/tachiuo' },
-  { label: 'アジ',     href: '/fish/aji' },
-  { label: 'シーバス', href: '/fish/seabass' },
-  { label: 'サワラ',   href: '/fish/sawara' },
-  { label: 'トラフグ', href: '/fish/torafugu' },
-  { label: 'マダイ',   href: '/fish/madai' },
-  { label: 'ヒラメ',   href: '/fish/hirame' },
-  { label: 'シロギス', href: '/fish/shirogisu' },
-]
+import { NAV_AREAS, NAV_FISH } from '@/lib/constants'
 
 type Props = { updatedAt?: string; subtitle?: string }
 
@@ -98,8 +81,9 @@ function DropdownNav({
           WebkitBackdropFilter: 'blur(20px)',
           border: '1px solid var(--border-default)',
           borderRadius: 'var(--radius-md)',
-          overflow: 'hidden',
+          overflow: 'auto',
           minWidth: 120,
+          maxHeight: '60vh',
           boxShadow: 'var(--shadow-float)',
           zIndex: 200,
         }}>
@@ -181,7 +165,7 @@ export default function SiteHeader({ updatedAt, subtitle = '関東圏' }: Props)
           <DropdownNav
             label="エリア"
             active={pathname.startsWith('/area')}
-            items={AREAS}
+            items={NAV_AREAS}
             open={openMenu === 'area'}
             onOpen={() => setOpenMenu('area')}
             onClose={() => setOpenMenu(null)}
@@ -189,7 +173,7 @@ export default function SiteHeader({ updatedAt, subtitle = '関東圏' }: Props)
           <DropdownNav
             label="魚種"
             active={pathname.startsWith('/fish')}
-            items={FISH}
+            items={NAV_FISH}
             open={openMenu === 'fish'}
             onOpen={() => setOpenMenu('fish')}
             onClose={() => setOpenMenu(null)}

@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { Cloud, Waves, Ship, Fish as FishIcon, Ruler } from 'lucide-react'
 import { CatchRecord } from '@/lib/supabase'
-import { EnvData, EnvDataMap, AISummaryRecord, AreaRecord } from '@/app/page'
+import { EnvData, EnvDataMap, AISummaryRecord, AreaRecord } from '@/lib/types'
 import { FishContent } from '@/lib/fishContent'
 import CatchTable, { SortField } from './CatchTable'
 import CatchChart from './CatchChart'

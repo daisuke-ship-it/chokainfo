@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { supabase } from '@/lib/supabase'
 import SiteHeader from '@/components/SiteHeader'
+import SiteFooter from '@/components/SiteFooter'
 import AnalysisCharts from '@/components/AnalysisCharts'
 
 export const metadata: Metadata = {
@@ -479,16 +480,7 @@ export default async function AnalysisPage() {
       </main>
 
       {/* ── Footer ───────────────────────────────────────────── */}
-      <footer style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)', padding: '32px 0' }}>
-        <div className="page-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-          <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-            © {new Date().getFullYear()} 釣果情報.com — 釣果分析
-          </span>
-          <span style={{ fontSize: 11, color: 'var(--border-strong)' }}>
-            データは各船宿サイトより自動収集しています
-          </span>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }

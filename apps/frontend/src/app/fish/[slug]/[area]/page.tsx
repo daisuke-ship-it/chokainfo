@@ -4,9 +4,10 @@ import type { Metadata } from 'next'
 import { supabase, CatchRecord } from '@/lib/supabase'
 import { fishContents } from '@/lib/fishContent'
 import { fishAreaContents, FishAreaContent } from '@/lib/fishAreaContent'
-import { EnvDataMap, AISummaryRecord, AreaRecord } from '@/app/page'
+import { EnvDataMap, AISummaryRecord, AreaRecord } from '@/lib/types'
 import FishDashboard from '@/components/FishDashboard'
 import SiteHeader from '@/components/SiteHeader'
+import SiteFooter from '@/components/SiteFooter'
 
 // ── エリア定義 ────────────────────────────────────────────────
 type AreaSlug = 'tokyo' | 'sagami' | 'sotobo' | 'minamibo'
@@ -332,16 +333,7 @@ export default async function FishAreaPage({ params }: { params: PageParams }) {
       </main>
 
       {/* ── Footer ──────────────────────────────────────── */}
-      <footer style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)', padding: '32px 0' }}>
-        <div className="page-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-          <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-            © {new Date().getFullYear()} 釣果情報.com — {areaConfig.name} {content.name}釣果情報
-          </span>
-          <span style={{ fontSize: 11, color: 'var(--border-strong)' }}>
-            データは各船宿サイトより自動収集しています
-          </span>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }

@@ -4,9 +4,10 @@ import type { Metadata } from 'next'
 import { MapPin, TrendingUp } from 'lucide-react'
 import { supabase, CatchRecord } from '@/lib/supabase'
 import { fishContents, fishMetaTitle, fishMetaDescription } from '@/lib/fishContent'
-import { EnvData, EnvDataMap, AISummaryRecord, AreaRecord } from '@/app/page'
+import { EnvData, EnvDataMap, AISummaryRecord, AreaRecord } from '@/lib/types'
 import FishDashboard from '@/components/FishDashboard'
 import SiteHeader from '@/components/SiteHeader'
+import SiteFooter from '@/components/SiteFooter'
 
 // ── 型定義 ────────────────────────────────────────────────────
 type RawCatchDetail = {
@@ -365,44 +366,7 @@ export default async function FishPage({ params }: { params: PageParams }) {
         />
       </main>
 
-      {/* ── 関連リンク ──────────────────────────────────────── */}
-      <section className="page-container" style={{ paddingBottom: 32 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-          <MapPin size={14} style={{ color: 'var(--color-cyan)' }} />
-          <span className="section-label">エリア別釣果を見る</span>
-        </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {Object.entries(AREA_SLUG_MAP).map(([areaName, areaSlug]) => (
-            <Link
-              key={areaSlug}
-              href={`/area/${areaSlug}`}
-              style={{
-                padding: '8px 18px', borderRadius: 100, fontSize: 13,
-                border: '1px solid var(--border-default)',
-                background: 'var(--bg-card)', color: 'var(--text-secondary)',
-                textDecoration: 'none',
-              }}
-            >
-              {areaName}
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Footer ───────────────────────────────────────── */}
-      <footer style={{ borderTop: '1px solid var(--border-subtle)', padding: '28px 0' }}>
-        <div className="page-container" style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          flexWrap: 'wrap', gap: 8,
-        }}>
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-            &copy; {new Date().getFullYear()} 釣果情報.com
-          </span>
-          <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
-            データは各船宿サイトより自動収集
-          </span>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }

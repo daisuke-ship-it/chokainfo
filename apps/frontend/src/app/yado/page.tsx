@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { MapPin, ExternalLink, ArrowRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import SiteHeader from '@/components/SiteHeader'
+import SiteFooter from '@/components/SiteFooter'
 
 // ── 型 ──────────────────────────────────────────────────────────
 type ShipyardRow = {
@@ -190,19 +191,7 @@ export default async function YadoListPage() {
       </main>
 
       {/* ── Footer ────────────────────────────────────────── */}
-      <footer style={{ borderTop: '1px solid var(--border-subtle)', padding: '28px 0' }}>
-        <div className="page-container" style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          flexWrap: 'wrap', gap: 8,
-        }}>
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-            &copy; {new Date().getFullYear()} 釣果情報.com
-          </span>
-          <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
-            データは各船宿サイトより自動収集
-          </span>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }

@@ -210,9 +210,20 @@ input[type="date"] { color-scheme: dark; }
 ::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.18); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-cyan); }
 
-/* Bottom nav spacing (mobile only) */
+/* Bottom nav spacing + safe area (mobile) */
 @media (max-width: 767px) {
-  body { padding-bottom: 64px; }
+  body {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Text wrapping improvements */
+h1, h2, h3 { text-wrap: balance; }
+p { text-wrap: pretty; }
+
+/* Minimum legible font size (mobile) */
+@media (max-width: 767px) {
+  .data-label, .section-label { font-size: max(11px, 0.75rem); }
 }
 
 /* Accent glow utility */

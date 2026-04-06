@@ -3,9 +3,10 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { TrendingUp, Fish } from 'lucide-react'
 import { supabase, CatchRecord } from '@/lib/supabase'
-import { EnvDataMap, AISummaryRecord, AreaRecord, FishRecord, SpeciesGroupMap } from '@/app/page'
+import { EnvDataMap, AISummaryRecord, AreaRecord, FishRecord, SpeciesGroupMap } from '@/lib/types'
 import CatchDashboard from '@/components/CatchDashboard'
 import SiteHeader from '@/components/SiteHeader'
+import SiteFooter from '@/components/SiteFooter'
 
 // ── エリア定義 ──────────────────────────────────────────────
 type AreaSlug = 'tokyo' | 'sagami' | 'sotobo' | 'minamibo'
@@ -366,49 +367,7 @@ export default async function AreaPage({ params }: { params: PageParams }) {
         )}
       </main>
 
-      {/* ── 魚種別釣果リンク ─────────────────────────────────── */}
-      <section className="page-container" style={{ paddingBottom: 32 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-          <Fish size={14} style={{ color: 'var(--color-cyan)' }} />
-          <span className="section-label">魚種別釣果を見る</span>
-        </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {[
-            { name: 'タチウオ', slug: 'tachiuo' }, { name: 'アジ', slug: 'aji' },
-            { name: 'シーバス', slug: 'seabass' }, { name: 'サワラ', slug: 'sawara' },
-            { name: 'トラフグ', slug: 'torafugu' }, { name: 'マダイ', slug: 'madai' },
-            { name: 'ヒラメ', slug: 'hirame' }, { name: 'シロギス', slug: 'shirogisu' },
-          ].map((f) => (
-            <Link
-              key={f.slug}
-              href={`/fish/${f.slug}`}
-              style={{
-                padding: '8px 18px', borderRadius: 100, fontSize: 13,
-                border: '1px solid var(--border-default)',
-                background: 'var(--bg-card)', color: 'var(--text-secondary)',
-                textDecoration: 'none',
-              }}
-            >
-              {f.name}
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Footer ─────────────────────────────────────────────── */}
-      <footer style={{ borderTop: '1px solid var(--border-subtle)', padding: '28px 0' }}>
-        <div className="page-container" style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          flexWrap: 'wrap', gap: 8,
-        }}>
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-            &copy; {new Date().getFullYear()} 釣果情報.com — {config.name}
-          </span>
-          <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
-            データは各船宿サイトより自動収集
-          </span>
-        </div>
-      </footer>
+      <SiteFooter />
 
     </div>
   )

@@ -2,53 +2,10 @@ import Link from 'next/link'
 import { Fish, TrendingUp, MapPin, ArrowRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import SiteHeader from '@/components/SiteHeader'
+import SiteFooter from '@/components/SiteFooter'
+import { EnvDataMap, AISummaryRecord } from '@/lib/types'
+import { AREA_CONFIG, AREA_SLUGS, FISH_SLUGS, type AreaSlug } from '@/lib/constants'
 
-// ── 型定義（他コンポーネントが import するため export 必須） ──────
-export type EnvData = {
-  weather: string | null
-  wind_speed_ms: number | null
-  tide_type: string | null
-}
-export type EnvDataMap = Record<string, EnvData>
-
-export type AISummaryRecord = {
-  summary_type: string
-  target_id: number | null
-  target_date: string
-  summary_text: string
-}
-
-export type AreaRecord = {
-  id: number
-  name: string
-}
-
-export type FishRecord = {
-  id: number
-  name: string
-}
-
-export type SpeciesGroupMap = Record<string, string[]>
-
-// ── エリア・魚種スラッグ ──────────────────────────────────────
-const FISH_SLUGS: Record<string, string> = {
-  'タチウオ': 'tachiuo', 'アジ': 'aji', 'サワラ': 'sawara',
-  'シーバス': 'seabass', 'マダイ': 'madai', 'ヒラメ': 'hirame',
-  'シロギス': 'shirogisu', 'トラフグ': 'torafugu',
-}
-const AREA_SLUGS: Record<string, string> = {
-  '東京湾': 'tokyo', '相模湾': 'sagami', '外房': 'sotobo', '南房': 'minamibo',
-}
-
-// ── エリア定義 ────────────────────────────────────────────────
-type AreaSlug = 'tokyo' | 'sagami' | 'sotobo' | 'minamibo'
-
-const AREA_CONFIG: { slug: AreaSlug; name: string; description: string }[] = [
-  { slug: 'tokyo',    name: '東京湾', description: '金沢八景・横浜・走水など' },
-  { slug: 'sagami',   name: '相模湾', description: '茅ケ崎・平塚・小田原など' },
-  { slug: 'sotobo',   name: '外房',   description: '勝浦・大原・一宮など' },
-  { slug: 'minamibo', name: '南房',   description: '館山・白浜など' },
-]
 
 // ── おすすめ型 ────────────────────────────────────────────────
 type Recommendation = {
@@ -385,23 +342,7 @@ export default async function Home() {
         </section>
       </main>
 
-      {/* ── Footer ──────────────────────────────────────── */}
-      <footer style={{
-        borderTop: '1px solid var(--border-subtle)',
-        padding: '28px 0',
-      }}>
-        <div className="page-container" style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          flexWrap: 'wrap', gap: 8,
-        }}>
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-            &copy; {new Date().getFullYear()} 釣果情報.com
-          </span>
-          <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
-            データは各船宿サイトより自動収集
-          </span>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }
@@ -409,7 +350,7 @@ export default async function Home() {
 // ── RecommendationCard ────────────────────────────────────────
 function RecommendationCard({ rec }: { rec: Recommendation }) {
   const areaSlug = AREA_SLUGS[rec.area] ?? 'tokyo'
-  const fishSlug = FISH_SLUGS[rec.fish]
+  const fishSlug = FISH_SLUGS[rec.fish as keyof typeof FISH_SLUGS]
   const href = fishSlug ? `/fish/${fishSlug}/${areaSlug}` : `/area/${areaSlug}`
 
   const scoreColor =

@@ -11,7 +11,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { CatchRecord } from '@/lib/supabase'
-import { EnvDataMap } from '@/app/page'
+import { EnvDataMap } from '@/lib/types'
 
 export type Props = {
   records: CatchRecord[]
